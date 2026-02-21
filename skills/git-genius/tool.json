@@ -1,0 +1,16 @@
+{
+	"name": "audit_repo",
+	"description": "Performs a deep audit of the current git repository.",
+	"version": "1.0.0",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"path": { "type": "string", "description": "The path to audit" }
+		}
+	},
+	"runtime": {
+		"engine": "bun",
+		"entrypoint": "src/index.ts",
+		"timeout": 10000
+	}
+}

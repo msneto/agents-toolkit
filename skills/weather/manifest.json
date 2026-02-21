@@ -1,9 +1,0 @@
-{
-	"name": "weather",
-	"version": "1.0.0",
-	"type": "skill",
-	"description": "A skill to fetch weather data.",
-	"author": "ATK Team",
-	"tags": ["weather", "utility"],
-	"platforms": ["all"]
-}

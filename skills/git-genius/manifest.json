@@ -1,0 +1,9 @@
+{
+	"name": "git-genius",
+	"version": "1.0.0",
+	"type": "skill",
+	"description": "Expert git operations and codebase auditing.",
+	"author": "ATK Team",
+	"tags": ["git", "audit"],
+	"compatibility": ["all"]
+}

@@ -1,9 +1,0 @@
-{
-	"name": "test-standard-skill",
-	"version": "1.0.0",
-	"type": "skill",
-	"description": "A new skill called test-standard-skill",
-	"author": "Your Name",
-	"tags": [],
-	"compatibility": ["all"]
-}

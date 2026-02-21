@@ -112,36 +112,41 @@ async function discoverAllComponents(atkRoot: string) {
 
 		try {
 			const entries = await fs.readdir(fullDir, { withFileTypes: true });
-			for (const entry of entries) {
-				if (entry.isFile() && entry.name.endsWith(".md")) {
-					const name = entry.name.replace(".md", "");
-					components.push({
-						type,
-						name,
-						description: "Prompt-based capability",
-					});
-				} else if (entry.isDirectory()) {
-					// Check for SKILL.md (Standard) or manifest.json (Internal)
-					const skillMdPath = path.join(fullDir, entry.name, "SKILL.md");
-					const manifestPath = path.join(fullDir, entry.name, "manifest.json");
+			const seen = new Set<string>();
 
-					let description = "Modular capability";
-					try {
-						const content = await fs.readFile(skillMdPath, "utf-8");
-						const match = content.match(/description:\s*(.*)/);
-						if (match) description = match[1].trim();
-					} catch {
+			for (const entry of entries) {
+				const name = entry.name.replace(".md", "");
+				if (seen.has(name)) continue;
+				seen.add(name);
+
+				let description = "Prompt-based capability";
+				const skillMdPath = entry.isDirectory()
+					? path.join(fullDir, entry.name, "SKILL.md")
+					: path.join(fullDir, entry.name);
+
+				try {
+					const content = await fs.readFile(skillMdPath, "utf-8");
+					const match = content.match(/description:\s*(.*)/i);
+					if (match) description = match[1].trim();
+				} catch {
+					// Fallback to manifest.json if directory
+					if (entry.isDirectory()) {
 						try {
+							const manifestPath = path.join(
+								fullDir,
+								entry.name,
+								"manifest.json",
+							);
 							const raw = await fs.readFile(manifestPath, "utf-8");
 							const manifest = JSON.parse(raw);
-							description = manifest.description || description;
+							description = manifest.description || "Modular capability";
 						} catch {
 							/* Skip */
 						}
 					}
-
-					components.push({ type, name: entry.name, description });
 				}
+
+				components.push({ type, name, description });
 			}
 		} catch {
 			// Dir not found
