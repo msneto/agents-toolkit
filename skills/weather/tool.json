@@ -1,0 +1,32 @@
+{
+	"name": "get_weather",
+	"description": "Fetches current weather for a specific location.",
+	"version": "1.0.0",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"city": {
+				"type": "string",
+				"description": "The city name, e.g. San Francisco"
+			},
+			"state": { "type": "string", "description": "The state code, e.g. CA" }
+		},
+		"required": ["city"]
+	},
+	"runtime": {
+		"engine": "bun",
+		"entrypoint": "src/index.ts",
+		"timeout": 5000
+	},
+	"auth": {
+		"env": {
+			"WEATHER_API_KEY": {
+				"description": "OpenWeatherMap API Key",
+				"required": true
+			}
+		}
+	},
+	"hooks": {
+		"post_link": "bun install"
+	}
+}

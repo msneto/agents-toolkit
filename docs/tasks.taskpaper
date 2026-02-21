@@ -1,0 +1,107 @@
+Agents Toolkit (ATK) Roadmap:
+	ATK is a deterministic local agent control plane for cross-platform prompt and skill orchestration.
+	This document tracks the progression from the "Ruthless Core" to a full-scale Agentic Ingestion system.
+
+Phase 1: Foundation (The Ruthless Core) @1.0.0
+	- Project Initialization @done(2026-02-21)
+		Bun provides the high-speed runtime and built-in shell integration required for sub-100ms startup.
+		- Initialize Bun project and install elite stack (Clack, Picocolors, Commander, etc.) @done(2026-02-21)
+		- Scaffold directory structure (agents, skills, rules, commands, src, bin) @done(2026-02-21)
+		- Create src/utils/ui.ts for premium branding and alignment @done(2026-02-21)
+		- Create src/core/config.ts for safe state management @done(2026-02-21)
+	- Core CLI Engine @done(2026-02-21)
+		- Implement atk init wizard with $PATH registration @done(2026-02-21)
+		- Create bin/atk executable wrapper @done(2026-02-21)
+		- Set up Commander.js routing for sub-commands @done(2026-02-21)
+
+Phase 2: The Deterministic Runtime @1.0.0
+	- Variable Resolution Engine @done(2026-02-21)
+		Variables solve "Prompt Rot" by allowing one rule to serve multiple projects/languages.
+		- Implement layered lookup (Secrets > Global > Project) @done(2026-02-21)
+		- Build Variable Wizard for missing context resolution @done(2026-02-21)
+		- Add support for {{vars}} in Markdown files @done(2026-02-21)
+	- Link Management @done(2026-02-21)
+		Symlinks allow the toolkit repo to stay the single source of truth.
+		- Implement Dynamic Cache strategy for resolved prompts @done(2026-02-21)
+		- Create relative symlinking logic for project portability @done(2026-02-21)
+		- Add conflict detection and --force overwrite logic @done(2026-02-21)
+	- UX & Refinement @done(2026-02-21)
+		UI must follow the "Mentor Pattern": taking the user by the hand and explaining the 'Why'.
+		- Build atk link interactive wizard with platform mapping @done(2026-02-21)
+		- Enforce "1-space rule" for icons and text alignment @done(2026-02-21)
+
+Phase 3: The Security Guard @1.0.0
+	- Automated Auditing @done(2026-02-21)
+		Statistically significant security pass before any hook execution.
+		- Implement SecurityShield heuristic engine for command scanning @done(2026-02-21)
+		- Define risk levels (SAFE, WARN, DANGER, BLOCKED) @done(2026-02-21)
+		- Add static analysis for sensitive paths and restricted binaries @done(2026-02-21)
+	- Security UX @done(2026-02-21)
+		- Create securityAlert UI component with double-borders @done(2026-02-21)
+		- Add "Mentor Pattern" explanations for flagged commands @done(2026-02-21)
+
+Phase 4: Tool Runtime & Hooks @1.1.0
+	- Tool Intermediate Representation (IR) @done(2026-02-21)
+		The IR acts as a Rosetta Stone between different agent tool schemas (OpenAI, Gemini, MCP).
+		- Define Zod schema for tool.json / manifest.json (name, params, runtime) @done(2026-02-21)
+		- Implement strict JSON Schema validation for tool parameters @done(2026-02-21)
+		- Add support for outputSchema to help agent reasoning @done(2026-02-21)
+		- Implement tool versioning within the IR @done(2026-02-21)
+		- Add support for few-shot 'examples' in the IR @done(2026-02-21)
+	- Hook Execution @done(2026-02-21)
+		Hooks shift behavior from "prompt suggestion" to "guaranteed execution".
+		- Build pre_link and post_link execution engine using Bun.$ @done(2026-02-21)
+		- Implement shell-safe environment variable injection for hooks @done(2026-02-21)
+		- Add timeout logic (5s default) with graceful SIGTERM handling @done(2026-02-21)
+		- Implement persistent hook logs in .atk/logs/ @done(2026-02-21)
+		- Add mandatory 'pre_link' check for required system binaries (e.g. ffmpeg, jq) @done(2026-02-21)
+	- Transpilation @todo
+		- Implement IR -> Gemini CLI tool.json generator @todo
+		- Build MCP server bridge for Claude Code (JSON-RPC wrapper) @todo
+		- Create "Executable Bridge" shell scripts for non-standard agents @todo
+	- Debugging @done(2026-02-21)
+		- Create atk test <tool> command for local dry-run @done(2026-02-21)
+		- Implement mock input injection via --input flag or interactive prompt @done(2026-02-21)
+		- Add capture of stdout/stderr for tool execution debugging @done(2026-02-21)
+
+Phase 5: Advanced Orchestration @1.2.0
+	- Scaffolding
+		Templates follow "Prompts-as-Markdown" best practices (Instructions, Context, Examples).
+		- Implement atk create <type> <name> interactive wizard
+		- Build boilerplate templates for Rules (Behavior, Examples)
+		- Create "Skill Starter" template with Bun/TS index.ts and manifest
+		- Auto-generate valid manifest.json with author/version info
+	- Bundling
+		Bundles are high-level project profiles (e.g. "React Web Stack").
+		- Implement bundle.json schema to define component groups
+		- Add dependency resolution (e.g. Skill A requires Rule B)
+		- Support recursive linking of all bundle members
+	- Profiles
+		Profiles allow hot-swapping entire agentic environment states.
+		- Implement atk profile save <name> to snapshot current symlinks
+		- Create atk profile switch <name> for instant environment swapping
+		- Build profile diff tool to see changes between snapshots
+
+Phase 6: Ingestion & Scale @2.0.0
+	- Harvesting
+		The process of centralizing existing configs into the ATK repo.
+		- Build path heuristics for Cursor, Claude, and Gemini CLI defaults
+		- Implement recursive scan of user home directory for unmanaged prompts
+		- Create collision wizard with side-by-side diff view
+		- Implement "Semantic Rename" (e.g. name-cursor.md) during import
+	- Secret Extraction
+		- Add regex-based detection for API keys (OpenAI, Anthropic, Gemini)
+		- Build "PII Masking" to replace keys with {{SECRET_VAR}} placeholders
+		- Auto-populate .env.atk during the harvesting process
+	- Auto-Repair
+		- Implement "Integrity Check" on every ATK command run
+		- Build batch-repair logic to update all symlinks if ATK_ROOT moves
+		- Add --prune flag to remove dangling/orphaned links
+
+Project Metadata:
+	- Version: 0.8.0 (Internal) -> 1.0.0 (Public Target)
+	- Runtime: Bun
+	- Target: Linux/Unix
+	- Standards: Clack (UI), Zod (Validation), MCP (Tools)
+	- UX Philosophy: Vertical Flow, Mentor Pattern, 1-Space Alignment, Invisible Grids
+	- Security Philosophy: Static Audit, User Consent, No-Sudo, Block-by-Default
