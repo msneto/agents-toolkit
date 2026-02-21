@@ -28,6 +28,8 @@ ATK is built as a series of stateless core functions to ensure high-speed execut
 | **Gemini CLI** | `.gemini` | `.gemini/commands/` | TOML (Transpiled) |
 | **Claude Code** | `.clauderules` | `.clauderules` | Markdown |
 | **Cursor** | `.cursorrules` | `.cursorrules` | Markdown |
+| **Windsurf** | `.windsurfrules` | `.windsurfrules` | Markdown |
+| **Codex** | `.codex` | `.codex/commands/` | Markdown |
 
 ---
 
@@ -57,7 +59,8 @@ When a target file exists and is NOT a managed symlink:
 
 - `atk status`: Dashboard of detected environments and active ATK links.
 - `atk explore [query]`: Fuzzy search for components with instant "Found! Link now?" logic.
-- `atk link [type] [name]`: Guided or direct linking with auto-platform discovery.
+- `atk link [type] [name]`: Guided or direct linking with auto-platform discovery. Types include `rule`, `skill`, `command`, `agent`, `bundle`.
+- `atk profile [save|switch|list|delete] [name]`: Save and apply link snapshots (optional `--platform` override on switch).
 - `atk create [type] [name]`: Scaffolds standard-compliant capabilities.
 - `atk test <name> [-i json]`: Local dry-run debugger for tool logic.
 - `atk mcp [install|run]`: Management for the cross-platform MCP bridge.

@@ -16,10 +16,12 @@
 ---
 
 ## 2. Key Features (The "Ruthless Core")
-*   **Variable Resolution Engine**: Use `{{vars}}` in Markdown rules. ATK resolves them from secrets (`.env.atk`), global context, or project-specific JSON.
-*   **Dynamic Cache Strategy**: Generic rules stay in the repo; resolved prompts are cached locally and symlinked for agent access.
+*   **Variable Resolution Engine**: Use `{{vars}}` in Markdown assets. ATK resolves them from secrets (`.env.atk`), global context, or project-specific JSON.
+*   **Dynamic Cache Strategy**: Generic source files stay in the repo; resolved/transpiled content is cached locally and symlinked for agent access.
 *   **Security Shield**: Automated auditing of `pre_link` and `post_link` hooks to prevent malicious code execution.
-*   **Multi-Agent Mapping**: Link one rule and ATK automatically knows to name it `.cursorrules`, `GEMINI.md`, or `.clauderules`.
+*   **Bundles**: Group multiple components in `bundle.json` and link them recursively with one command.
+*   **Profiles**: Save and re-apply active link snapshots per project with `atk profile`.
+*   **Multi-Agent Mapping**: Link once and map to platform-specific targets across OpenCode, Gemini, Claude, Cursor, Windsurf, and Codex.
 *   **Local Tool Debugger**: Use `atk test <tool>` to dry-run tool logic with mock JSON input.
 
 ---
@@ -48,15 +50,22 @@ atk link rule clean-code
 ```bash
 atk status
 ```
-*See exactly which symlinks are active and which variables are resolved.*
+*See detected environments and active ATK links in the current project.*
+
+### 4. Save and switch profiles
+```bash
+atk profile save my-setup
+atk profile switch my-setup
+```
+*Capture active links and re-apply them later.*
 
 ---
 
 ## 4. Development Roadmap
 - [x] Phase 1-3: Foundation & Security Guard
-- [ ] Phase 4: Tool Runtime & MCP Bridge (Current)
-- [ ] Phase 5: Advanced Orchestration (Bundles & Profiles)
-- [ ] Phase 6: Ingestion & Scale (Harvesting)
+- [x] Phase 4: Tool Runtime & MCP Bridge
+- [x] Phase 5: Advanced Orchestration (Bundles & Profiles)
+- [ ] Phase 6: Ingestion & Scale (Harvesting) (Current)
 
 ---
 

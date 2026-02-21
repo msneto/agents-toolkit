@@ -12,9 +12,9 @@
 - **Transpilation**: Only Gemini TOML is implemented. OpenCode and Claude use Markdown (passthrough), but we might need more formats as we add agents.
 
 ## 3. Immediate Next Steps (Tomorrow)
-1.  **Phase 5 (Bundling)**: Define the `bundle.json` schema to allow grouping (e.g., a "React" bundle containing 3 rules and 2 skills).
-2.  **Profiles**: Implement `atk profile save` to snapshot the current state of symlinks in a project or globally.
-3.  **Refine `atk status`**: Add a "Unresolved Variables" section to the dashboard.
+1.  **Profile UX hardening**: Add richer validation and conflict visibility during `profile switch`.
+2.  **Refine `atk status`**: Add an "Unresolved Variables" section to the dashboard.
+3.  **MCP registry**: Replace ad-hoc tool path mapping with a typed registry.
 
 ## 4. Environment Notes
 - **ATK_ROOT**: Managed via `conf` in `~/.config/atk-nodejs/`.
