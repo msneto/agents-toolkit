@@ -1,0 +1,9 @@
+{
+	"name": "github-helper",
+	"version": "1.0.0",
+	"type": "skill",
+	"description": "A new skill called github-helper",
+	"author": "Your Name",
+	"tags": [],
+	"platforms": ["all"]
+}

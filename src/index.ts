@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { createCommand } from "./commands/create";
 import { initCommand } from "./commands/init";
 import { linkCommand } from "./commands/link";
 import { mcpCommand } from "./commands/mcp";
@@ -88,6 +89,20 @@ program
 			await mcpCommand(action, options);
 		} catch (err) {
 			UI.error(err instanceof Error ? err.message : String(err), "E004");
+			process.exit(1);
+		}
+	});
+
+program
+	.command("create")
+	.description("Scaffold a new component (Rule, Skill, Command)")
+	.argument("[type]", "Component type (rule, skill, command)")
+	.argument("[name]", "Component name (kebab-case)")
+	.action(async (type, name, options) => {
+		try {
+			await createCommand(type, name, options);
+		} catch (err) {
+			UI.error(err instanceof Error ? err.message : String(err), "E005");
 			process.exit(1);
 		}
 	});
