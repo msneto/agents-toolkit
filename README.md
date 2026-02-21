@@ -46,6 +46,12 @@ atk link rule clean-code
 ```
 *ATK will guide you through choosing a rule and a target platform.*
 
+To link to every detected environment in the current project:
+```bash
+atk link rule clean-code --all
+```
+When a target already has content, ATK uses a per-target conflict wizard with safe defaults (`Backup & Link` first). In CI/headless mode, conflicts fail fast.
+
 ### 3. Check Status
 ```bash
 atk status

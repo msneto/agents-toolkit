@@ -59,7 +59,9 @@ When a target file exists and is NOT a managed symlink:
 
 - `atk status`: Dashboard of detected environments and active ATK links.
 - `atk explore [query]`: Fuzzy search for components with instant "Found! Link now?" logic.
-- `atk link [type] [name]`: Guided or direct linking with auto-platform discovery. Types include `rule`, `skill`, `command`, `agent`, `bundle`.
+- `atk link [type] [name]`: Guided or direct linking with auto-platform discovery. Types include `rule`, `skill`, `command`, `agent`, `bundle`. Use `--all` to broadcast to all detected project environments.
+  - In interactive `--all`, conflicts are handled per target with a wizard: `Backup & Link`, `Overwrite`, `Skip Target`, or `Abort Broadcast`.
+  - In non-interactive/CI mode, conflicts fail fast.
 - `atk profile [save|switch|list|delete] [name]`: Save and apply link snapshots (optional `--platform` override on switch).
 - `atk create [type] [name]`: Scaffolds standard-compliant capabilities.
 - `atk test <name> [-i json]`: Local dry-run debugger for tool logic.
