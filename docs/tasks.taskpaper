@@ -47,13 +47,15 @@ Phase 4: Tooling & Standard Compliance @done(2026-02-21)
 	- Testing & Debugging @done(2026-02-21)
 		- Implement atk test <tool> with mock JSON input via STDIN @done(2026-02-21)
 
-Phase 5: Advanced Orchestration @1.2.0
-	- Bundling
-		- Implement bundle.json schema to define component groups (e.g. "Web Stack") @todo
-		- Support recursive linking of all bundle members @todo
-	- Profiles
-		- Implement atk profile save <name> to snapshot current symlinks @todo
-		- Create atk profile switch <name> for instant environment swapping @todo
+Phase 5: Advanced Orchestration @done(2026-02-21)
+	- Bundling @done(2026-02-21)
+		- Implement bundle.json schema to define component groups (e.g. "Web Stack") @done(2026-02-21)
+		- Support recursive linking of all bundle members @done(2026-02-21)
+	- Profiles @done(2026-02-21)
+		- Implement atk profile save <name> to snapshot current symlinks @done(2026-02-21)
+		- Create atk profile switch <name> for instant environment swapping @done(2026-02-21)
+	- Scaffolding Expansion
+		- Add support for custom templates in ~/.config/atk/templates/ @todo
 	- Scaffolding Expansion
 		- Add support for custom templates in ~/.config/atk/templates/ @todo
 

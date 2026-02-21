@@ -8,6 +8,19 @@ bun.lock
 ~/.config/atk/
 ~/.local/share/atk/
 
+# Agent Markers
+.gemini/
+.opencode/
+.claude/
+.clauderules
+.cursorrules
+.cursor/rules/
+.windsurfrules
+GEMINI.md
+AGENTS.md
+*.atk-bak
+
+
 # OS/IDE
 .DS_Store
 .vscode

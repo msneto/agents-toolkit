@@ -5,6 +5,7 @@
 	"version": "1.0.0",
 	"scripts": {
 		"dev": "bun run src/index.ts",
+		"test": "bun test",
 		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
