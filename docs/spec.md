@@ -26,7 +26,7 @@ ATK is built as a series of stateless core functions to ensure high-speed execut
 | :--- | :--- | :--- | :--- |
 | **OpenCode** | `.opencode` | `.opencode/commands/` | Markdown |
 | **Gemini CLI** | `.gemini` | `.gemini/commands/` | TOML (Transpiled) |
-| **Claude Code** | `.clauderules` | `.clauderules` | Markdown |
+| **Claude Code** | `.clauderules` | `.claude/commands/` | Markdown |
 | **Cursor** | `.cursorrules` | `.cursorrules` | Markdown |
 | **Windsurf** | `.windsurfrules` | `.windsurfrules` | Markdown |
 | **Codex** | `.codex` | `.codex/commands/` | Markdown |
@@ -62,6 +62,7 @@ When a target file exists and is NOT a managed symlink:
 - `atk link [type] [name]`: Guided or direct linking with auto-platform discovery. Types include `rule`, `skill`, `command`, `agent`, `bundle`. Use `--all` to broadcast to all detected project environments.
   - In interactive `--all`, conflicts are handled per target with a wizard: `Backup & Link`, `Overwrite`, `Skip Target`, or `Abort Broadcast`.
   - In non-interactive/CI mode, conflicts fail fast.
+  - For Markdown command targets (OpenCode, Codex, Claude), ATK keeps Markdown output format and applies variable substitution during link resolution.
 - `atk profile [save|switch|list|delete] [name]`: Save and apply link snapshots (optional `--platform` override on switch).
 - `atk create [type] [name] [--edit]`: Scaffolds standard-compliant capabilities for `rule`, `skill`, `command`, and `agent`. In interactive mode, prompts to open the created file in your editor.
 - `atk test <name> [-i json]`: Local dry-run debugger for tool logic.

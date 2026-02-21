@@ -54,6 +54,8 @@ atk create agent senior-dev
 ```
 *Create scaffolds for commands, skills, rules, and agents. Use `--edit` to open the generated file (`SKILL.md` for skills) immediately.*
 
+For Markdown command targets (OpenCode, Codex, Claude), ATK links markdown content as-is in target format, with variable substitution still applied during linking.
+
 To link to every detected environment in the current project:
 ```bash
 atk link rule clean-code --all
