@@ -24,6 +24,21 @@ export interface LinkOptions {
 	name?: string;
 	isGlobal?: boolean;
 	nonInteractive?: boolean;
+	broadcast?: boolean;
+}
+
+export class LinkAbortError extends Error {
+	constructor(message = "Linking aborted by user.") {
+		super(message);
+		this.name = "LinkAbortError";
+	}
+}
+
+export class LinkSkipError extends Error {
+	constructor(message = "Skipped current target.") {
+		super(message);
+		this.name = "LinkSkipError";
+	}
 }
 
 export interface ActiveLink {
@@ -188,7 +203,7 @@ export async function writeToCache(
  */
 export async function handlePathConflict(
 	targetPath: string,
-	options: { force?: boolean; nonInteractive?: boolean },
+	options: { force?: boolean; nonInteractive?: boolean; broadcast?: boolean },
 ) {
 	if (!(await exists(targetPath))) return true;
 
@@ -207,6 +222,10 @@ export async function handlePathConflict(
 	UI.warn(
 		`The file ${pc.bold(path.basename(targetPath))} already contains content.`,
 	);
+	note(
+		`ATK found existing local content at ${path.basename(targetPath)} and will not overwrite it without your decision.`,
+		"Safe Collision",
+	);
 
 	const action = await select({
 		message: "How would you like to proceed?",
@@ -217,13 +236,36 @@ export async function handlePathConflict(
 				hint: "Moves original to .atk-bak",
 			},
 			{ value: "overwrite", label: "Overwrite", hint: "Deletes original file" },
-			{ value: "abort", label: "Abort", hint: "I will handle this manually" },
+			...(options.broadcast
+				? [
+						{ value: "skip", label: "Skip Target", hint: "Continue broadcast" },
+						{
+							value: "abort",
+							label: "Abort Broadcast",
+							hint: "Stop all linking",
+						},
+					]
+				: [
+						{
+							value: "abort",
+							label: "Abort",
+							hint: "I will handle this manually",
+						},
+					]),
 		],
 	});
 
 	if (isCancel(action) || action === "abort") {
-		note(`Linking aborted.`, "Manual Action Required");
-		process.exit(0);
+		const reason = options.broadcast
+			? "Broadcast linking aborted."
+			: "Linking aborted.";
+		note(reason, "Manual Action Required");
+		throw new LinkAbortError(reason);
+	}
+
+	if (action === "skip") {
+		note("Skipped this target and continued broadcast.", "Conflict Resolution");
+		throw new LinkSkipError("Skipped current target.");
 	}
 
 	if (action === "backup") {
@@ -244,7 +286,8 @@ export async function createLink(
 	sourcePath: string,
 	options: LinkOptions = {},
 ) {
-	const { type, name, platform, isGlobal, force, nonInteractive } = options;
+	const { type, name, platform, isGlobal, force, nonInteractive, broadcast } =
+		options;
 	if (!type || !name || !platform) {
 		throw new Error(
 			"Missing required options for createLink: type, name, platform",
@@ -319,7 +362,7 @@ export async function createLink(
 			);
 		}
 
-		await handlePathConflict(targetPath, { force, nonInteractive });
+		await handlePathConflict(targetPath, { force, nonInteractive, broadcast });
 
 		const relativeSource = path.relative(
 			path.dirname(targetPath),
