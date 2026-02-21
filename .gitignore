@@ -1,34 +1,18 @@
-# dependencies (bun install)
+# Bun
 node_modules
+bun.lock
 
-# output
-out
-dist
-*.tgz
+# ATK Local State
+.env.atk
+.atk/
+~/.config/atk/
+~/.local/share/atk/
 
-# code coverage
-coverage
-*.lcov
-
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IntelliJ based IDEs
+# OS/IDE
+.DS_Store
+.vscode
 .idea
 
-# Finder (MacOS) folder config
-.DS_Store
+# Build/Dist
+dist/
+bin/atk.resolved
