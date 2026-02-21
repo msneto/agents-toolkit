@@ -36,6 +36,8 @@ program
 	.argument("[type]", "Component type (rule, skill, command, agent)")
 	.argument("[name]", "Component name")
 	.option("-f, --force", "Force overwrite of existing files")
+	.option("-g, --global", "Link to global agent configuration (e.g. ~/.gemini/)")
+	.option("-p, --platform <platform>", "Target agent platform (e.g. gemini, cursor)")
 	.option("--all", "Broadcast to all detected agent environments")
 	.action(async (type, name, cmdOptions) => {
 		const globalOptions = program.opts();

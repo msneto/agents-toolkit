@@ -1,21 +1,20 @@
+import { intro, outro, select, isCancel, cancel } from "@clack/prompts";
+import pc from "picocolors";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { cancel, intro, isCancel, outro, select } from "@clack/prompts";
-import pc from "picocolors";
 import { ATKConfig } from "../core/config";
 import { createLink } from "../core/links";
+import { UI } from "../utils/ui";
 import {
-	type ComponentType,
-	getTargetFilename,
 	SUPPORTED_PLATFORMS,
+	type ComponentType,
 	type SupportedPlatform,
 } from "../core/mapping";
-import { UI } from "../utils/ui";
 
 export async function linkCommand(
 	type?: string,
 	name?: string,
-	options: { force?: boolean; nonInteractive?: boolean } = {},
+	options: { force?: boolean; nonInteractive?: boolean; global?: boolean } = {},
 ) {
 	UI.header();
 	intro(pc.cyan("Linking Wizard"));
@@ -77,18 +76,20 @@ export async function linkCommand(
 		process.exit(0);
 	}
 
-	// 4. Resolve Paths and Map Filename
+	// 4. Resolve Source Path
 	const sourceFile = await resolveSourceFile(
 		atkRoot,
 		selectedType,
 		selectedName,
 	);
-	const targetFilename = getTargetFilename(selectedType, targetPlatform);
-	const targetPath = path.join(process.cwd(), targetFilename);
 
 	// 5. Execute Link
 	try {
-		await createLink(sourceFile, targetPath, {
+		await createLink(sourceFile, {
+			type: selectedType,
+			name: selectedName,
+			platform: targetPlatform,
+			isGlobal: options.global,
 			force: options.force,
 			nonInteractive: options.nonInteractive,
 		});
@@ -113,7 +114,7 @@ async function getComponentFiles(dir: string): Promise<string[]> {
 
 async function resolveSourceFile(
 	root: string,
-	type: string,
+	type: ComponentType,
 	name: string,
 ): Promise<string> {
 	const dir = type === "command" ? "commands" : `${type}s`;

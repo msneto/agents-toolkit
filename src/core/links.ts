@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { spinner } from "@clack/prompts";
 import pc from "picocolors";
 import { UI } from "../utils/ui";
@@ -8,11 +9,15 @@ import { ATKConfig } from "./config";
 import { executeHook } from "./hooks";
 import { type ToolIR, ToolIRSchema } from "./schema";
 import { replaceVariables, resolveVariables, scanVariables } from "./variables";
+import { resolveTarget, type ComponentType, type SupportedPlatform } from "./mapping";
+import { transpile } from "./transpiler";
 
 export interface LinkOptions {
 	force?: boolean;
-	platform?: string;
-	scope?: "global" | "project";
+	platform?: SupportedPlatform;
+	type?: ComponentType;
+	name?: string;
+	isGlobal?: boolean;
 	nonInteractive?: boolean;
 }
 
@@ -29,17 +34,31 @@ async function exists(p: string): Promise<boolean> {
 }
 
 /**
+ * Normalizes a path, resolving ~ to home directory.
+ */
+function normalizePath(p: string): string {
+  if (p.startsWith('~')) {
+    return path.join(os.homedir(), p.slice(1));
+  }
+  return path.resolve(p);
+}
+
+/**
  * Links a source file to a target destination.
- * Handles variable resolution, caching, tool validation, and hooks.
+ * Handles variable resolution, transpilation, caching, tool validation, and hooks.
  */
 export async function createLink(
 	sourcePath: string,
-	targetPath: string,
 	options: LinkOptions = {},
 ) {
+  const { type, name, platform, isGlobal, force, nonInteractive } = options;
+  if (!type || !name || !platform) {
+    throw new Error("Missing required options for createLink: type, name, platform");
+  }
+
 	const s = spinner();
 	const componentDir = path.dirname(sourcePath);
-	const isSkill = sourcePath.includes("/skills/");
+	const isSkill = type === 'skill';
 	let toolData: ToolIR | null = null;
 
 	// 1. Tool IR Validation (Skills Only)
@@ -52,7 +71,7 @@ export async function createLink(
 				`${pc.cyan("Tool Validated")}: ${pc.bold(toolData.name)} (v${toolData.version})`,
 			);
 		} catch {
-			// Not all skills need tools, but if tool.json exists, it must be valid.
+			// Not all skills need tools
 		}
 	}
 
@@ -60,9 +79,19 @@ export async function createLink(
 	if (toolData?.hooks?.pre_link) {
 		await executeHook("pre_link", toolData.hooks.pre_link, {
 			cwd: componentDir,
-			nonInteractive: options.nonInteractive,
+			nonInteractive,
 		});
 	}
+
+  // 3. Resolve Target Path
+  const targetConfig = resolveTarget(type, platform, name, isGlobal);
+  if (!targetConfig) {
+    throw new Error(`Could not resolve target configuration for ${type} on ${platform}`);
+  }
+
+  const baseTargetPath = normalizePath(targetConfig.path);
+  await fs.mkdir(baseTargetPath, { recursive: true });
+  const targetPath = path.join(baseTargetPath, `${targetConfig.filename}${targetConfig.extension}`);
 
 	s.start(`Linking ${UI.path(sourcePath)} to ${UI.path(targetPath)}`);
 
@@ -71,32 +100,40 @@ export async function createLink(
 		const vars = scanVariables(content);
 
 		let finalSource = sourcePath;
+    let finalContent = content;
 
-		if (vars.length > 0) {
-			// 3. Resolve Variables
-			const resolvedValues = await resolveVariables(vars, {
-				nonInteractive: options.nonInteractive,
-			});
-			const resolvedContent = replaceVariables(content, resolvedValues);
+    // 4. Resolve Variables
+    const resolvedValues = vars.length > 0 
+      ? await resolveVariables(vars, { nonInteractive }) 
+      : {};
+    
+    finalContent = replaceVariables(content, resolvedValues);
 
-			// 4. Cache Resolved Content (Centralized)
-			const cacheDir = path.join(path.dirname(ATKConfig.path()), "cache");
+    // 5. Transpile
+    const transpilation = transpile(finalContent, name, targetConfig);
+    finalContent = transpilation.content;
+
+    // 6. Cache if changed or transpiled
+    const needsCache = vars.length > 0 || targetConfig.format !== 'md';
+    if (needsCache) {
+			const globalConfigPath = ATKConfig.path();
+			const cacheDir = path.join(path.dirname(globalConfigPath), "cache");
 			await fs.mkdir(cacheDir, { recursive: true });
 
 			const contentHash = crypto
 				.createHash("md5")
-				.update(resolvedContent)
+				.update(finalContent)
 				.digest("hex");
-			const cacheFileName = `${path.basename(sourcePath)}.${contentHash}.md`;
+			const cacheFileName = `${name}.${platform}.${contentHash}${targetConfig.extension}`;
 			const cachePath = path.join(cacheDir, cacheFileName);
 
-			await fs.writeFile(cachePath, resolvedContent);
+			await fs.writeFile(cachePath, finalContent);
 			finalSource = cachePath;
 		}
 
-		// 5. Handle Conflict
+		// 7. Handle Conflict
 		if (await exists(targetPath)) {
-			if (options.force) {
+			if (force) {
 				await fs.unlink(targetPath);
 			} else {
 				s.stop(pc.yellow("⚠ Conflict detected."));
@@ -106,17 +143,17 @@ export async function createLink(
 			}
 		}
 
-		// 6. Create Symlink
+		// 8. Create Symlink
 		const relativeSource = path.relative(path.dirname(targetPath), finalSource);
 		await fs.symlink(relativeSource, targetPath);
 
 		s.stop(pc.green(`✔ Linked to ${targetPath}`));
 
-		// 7. Post-Link Hook
+		// 9. Post-Link Hook
 		if (toolData?.hooks?.post_link) {
 			await executeHook("post_link", toolData.hooks.post_link, {
 				cwd: componentDir,
-				nonInteractive: options.nonInteractive,
+				nonInteractive,
 			});
 		}
 	} catch (err) {

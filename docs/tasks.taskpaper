@@ -55,10 +55,11 @@ Phase 4: Tool Runtime & Hooks @1.1.0
 		- Add timeout logic (5s default) with graceful SIGTERM handling @done(2026-02-21)
 		- Implement persistent hook logs in .atk/logs/ @done(2026-02-21)
 		- Add mandatory 'pre_link' check for required system binaries (e.g. ffmpeg, jq) @done(2026-02-21)
-	- Transpilation @todo
-		- Implement IR -> Gemini CLI tool.json generator @todo
-		- Build MCP server bridge for Claude Code (JSON-RPC wrapper) @todo
-		- Create "Executable Bridge" shell scripts for non-standard agents @todo
+	- Transpilation
+		- Research platform-specific formats (OpenCode, Gemini, Codex, Claude, Cursor) @done(2026-02-21)
+		- Implement IR -> Gemini CLI TOML generator @done(2026-02-21)
+		- Build MCP server bridge for Claude Code (JSON-RPC wrapper)
+		- Create "Executable Bridge" shell scripts for non-standard agents
 	- Debugging @done(2026-02-21)
 		- Create atk test <tool> command for local dry-run @done(2026-02-21)
 		- Implement mock input injection via --input flag or interactive prompt @done(2026-02-21)
