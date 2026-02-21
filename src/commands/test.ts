@@ -10,8 +10,11 @@ export async function testCommand(
 	name?: string,
 	options: { input?: string; nonInteractive?: boolean } = {},
 ) {
-	UI.header();
-	intro(pc.cyan("Tool Debugger"));
+	const interactive = UI.isInteractive(options);
+	if (interactive) {
+		UI.header();
+		intro(pc.cyan("Tool Debugger"));
+	}
 
 	const atkRoot = ATKConfig.get().atkRoot;
 
@@ -36,10 +39,17 @@ export async function testCommand(
 		process.exit(1);
 	}
 
-	// 2. Mock Input
+	// 2. Resolve Input
 	let input = options.input;
 	if (!input) {
-		input = await text({
+		if (!interactive) {
+			UI.error(
+				"No input provided in non-interactive mode. Use --input.",
+				"E016",
+			);
+			process.exit(1);
+		}
+		input = (await text({
 			message: `Enter mock input for ${pc.magenta(toolData.name)} (JSON format):`,
 			initialValue: JSON.stringify(toolData.examples?.[0]?.input || {}),
 			validate: (val) => {
@@ -50,7 +60,7 @@ export async function testCommand(
 					return "Invalid JSON format.";
 				}
 			},
-		});
+		})) as string;
 	}
 
 	if (isCancel(input)) {
@@ -58,9 +68,9 @@ export async function testCommand(
 		process.exit(0);
 	}
 
-	// 3. Execute Tool
+	// 3. Execution
 	const s = spinner();
-	s.start(`Executing tool ${pc.bold(toolData.name)}...`);
+	if (interactive) s.start(`Executing tool ${pc.bold(toolData.name)}...`);
 
 	try {
 		const entrypoint = path.join(skillDir, toolData.runtime.entrypoint);
@@ -80,16 +90,20 @@ export async function testCommand(
 		const stderr = await new Response(proc.stderr).text();
 
 		if (status !== 0) {
-			s.stop(pc.red("✖ Execution failed."));
+			if (interactive) s.stop(pc.red("✖ Execution failed."));
 			console.log(`\n${pc.red("STDERR:")}\n${stderr}`);
 		} else {
-			s.stop(pc.green("✔ Execution successful!"));
-			console.log(`\n${pc.cyan("STDOUT (Output):")}\n${stdout}`);
+			if (interactive) {
+				s.stop(pc.green("✔ Execution successful!"));
+				console.log(`\n${pc.cyan("STDOUT (Output):")}\n${stdout}`);
+			} else {
+				process.stdout.write(stdout);
+			}
 		}
 	} catch (err) {
-		s.stop(pc.red("✖ Runtime error."));
+		if (interactive) s.stop(pc.red("✖ Runtime error."));
 		UI.error(err instanceof Error ? err.message : String(err));
 	}
 
-	outro(pc.cyan("Debug session complete."));
+	if (interactive) outro(pc.cyan("Debug session complete."));
 }

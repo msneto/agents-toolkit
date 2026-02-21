@@ -22,6 +22,9 @@ export const UI = {
 	intro: (msg: string) => intro(pc.cyan(msg)),
 	outro: (msg: string) => outro(pc.cyan(msg)),
 
+	isInteractive: (options: { nonInteractive?: boolean } = {}) => {
+		return process.stdout.isTTY && !options.nonInteractive;
+	},
 	error: (msg: string, code?: string) => {
 		const errorMsg = code ? `${pc.red(code)}: ${msg}` : msg;
 		// Enforce 1 space after icon

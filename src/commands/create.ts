@@ -16,14 +16,17 @@ import { UI } from "../utils/ui";
 export async function createCommand(
 	type?: string,
 	name?: string,
-	_options: { nonInteractive?: boolean } = {},
+	options: { nonInteractive?: boolean } = {},
 ) {
-	UI.header();
-	intro(pc.cyan("Scaffolding Wizard"));
+	const interactive = UI.isInteractive(options);
+	if (interactive) {
+		UI.header();
+		intro(pc.cyan("Scaffolding Wizard"));
+	}
 
 	const atkRoot = ATKConfig.get().atkRoot;
 
-	// 1. Choose Type
+	// 1. Resolve Type
 	let selectedType = type;
 	if (!selectedType) {
 		selectedType = (await select({
@@ -41,7 +44,7 @@ export async function createCommand(
 		process.exit(0);
 	}
 
-	// 2. Choose Name
+	// 2. Resolve Name
 	let selectedName = name;
 	if (!selectedName) {
 		selectedName = (await text({
@@ -63,7 +66,7 @@ export async function createCommand(
 
 	// 3. Execution
 	const s = spinner();
-	s.start(`Generating ${selectedType} '${selectedName}'...`);
+	if (interactive) s.start(`Generating ${selectedType} '${selectedName}'...`);
 
 	try {
 		const targetDir = path.join(
@@ -79,13 +82,17 @@ export async function createCommand(
 			await scaffoldPromptCommand(targetDir, selectedName);
 		}
 
-		s.stop(pc.green(`✔ Successfully created ${selectedType}!`));
-		outro(pc.cyan("Scaffolding complete."));
-		UI.tip(
-			`Edit the files in ${pc.magenta(path.join(targetDir, selectedName))} to customize your capability.`,
-		);
+		if (interactive) {
+			s.stop(pc.green(`✔ Successfully created ${selectedType}!`));
+			outro(pc.cyan("Scaffolding complete."));
+			UI.tip(
+				`Edit the files in ${pc.magenta(path.join(targetDir, selectedName))} to customize your capability.`,
+			);
+		} else {
+			UI.success(`Created ${selectedType}: ${selectedName}`);
+		}
 	} catch (err) {
-		s.stop(pc.red("✖ Creation failed."));
+		if (interactive) s.stop(pc.red("✖ Creation failed."));
 		UI.error(err instanceof Error ? err.message : String(err), "E015");
 	}
 }

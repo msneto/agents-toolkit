@@ -126,8 +126,12 @@ program
 	.description("Browse and search for available components in your toolkit")
 	.argument("[query]", "Search query")
 	.action(async (query) => {
+		const globalOptions = program.opts();
+		const options = {
+			nonInteractive: globalOptions.nonInteractive || globalOptions.ci,
+		};
 		try {
-			await exploreCommand(query);
+			await exploreCommand(query, options);
 		} catch (err) {
 			UI.error(err instanceof Error ? err.message : String(err), "E007");
 			process.exit(1);

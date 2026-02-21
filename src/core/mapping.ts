@@ -232,3 +232,33 @@ export const SUPPORTED_PLATFORMS: {
 	{ value: "cursor", label: "Cursor (.cursorrules)" },
 	{ value: "windsurf", label: "Windsurf (.windsurfrules)" },
 ];
+
+import fs from "node:fs/promises";
+import path from "node:path";
+
+export async function detectProjectPlatforms(
+	projectRoot: string,
+): Promise<SupportedPlatform[]> {
+	const detected: SupportedPlatform[] = [];
+	const markers: Record<string, string[]> = {
+		opencode: [".opencode", "AGENTS.md"],
+		gemini: [".gemini", "GEMINI.md"],
+		claude: [".clauderules"],
+		cursor: [".cursorrules", ".cursor/rules"],
+		windsurf: [".windsurfrules"],
+		codex: [".codex"],
+	};
+
+	for (const [platform, platformMarkers] of Object.entries(markers)) {
+		for (const marker of platformMarkers) {
+			try {
+				await fs.access(path.join(projectRoot, marker));
+				detected.push(platform as SupportedPlatform);
+				break;
+			} catch {
+				// Marker not found
+			}
+		}
+	}
+	return detected;
+}

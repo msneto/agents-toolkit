@@ -6,6 +6,7 @@ import { ATKConfig } from "../core/config";
 import { createLink } from "../core/links";
 import {
 	type ComponentType,
+	detectProjectPlatforms,
 	SUPPORTED_PLATFORMS,
 	type SupportedPlatform,
 } from "../core/mapping";
@@ -14,14 +15,22 @@ import { UI } from "../utils/ui";
 export async function linkCommand(
 	type?: string,
 	name?: string,
-	options: { force?: boolean; nonInteractive?: boolean; global?: boolean } = {},
+	options: {
+		force?: boolean;
+		nonInteractive?: boolean;
+		global?: boolean;
+		platform?: string;
+	} = {},
 ) {
-	UI.header();
-	intro(pc.cyan("Linking Wizard"));
+	const interactive = UI.isInteractive(options);
+	if (interactive) {
+		UI.header();
+		intro(pc.cyan("Linking Wizard"));
+	}
 
 	const atkRoot = ATKConfig.get().atkRoot;
 
-	// 1. Choose Type if not provided
+	// 1. Resolve Type
 	let selectedType = type as ComponentType;
 	if (!selectedType) {
 		selectedType = (await select({
@@ -40,7 +49,7 @@ export async function linkCommand(
 		process.exit(0);
 	}
 
-	// 2. Choose Name if not provided
+	// 2. Resolve Name
 	let selectedName = name;
 	if (!selectedName) {
 		const componentDir = path.join(
@@ -65,11 +74,30 @@ export async function linkCommand(
 		process.exit(0);
 	}
 
-	// 3. Choose Platform
-	const targetPlatform = (await select({
-		message: "Target environment:",
-		options: SUPPORTED_PLATFORMS,
-	})) as SupportedPlatform;
+	// 3. Resolve Platform (Smart Discovery)
+	let targetPlatform = options.platform as SupportedPlatform;
+	if (!targetPlatform) {
+		const detected = await detectProjectPlatforms(process.cwd());
+
+		if (detected.length === 1 && !options.global) {
+			targetPlatform = detected[0];
+			if (interactive)
+				UI.info(`Auto-detected environment: ${pc.magenta(targetPlatform)}`);
+		} else if (interactive) {
+			targetPlatform = (await select({
+				message: "Target environment:",
+				options: SUPPORTED_PLATFORMS,
+			})) as SupportedPlatform;
+		} else if (detected.length > 1) {
+			throw new Error(
+				`Multiple environments detected (${detected.join(", ")}). Please specify --platform.`,
+			);
+		} else {
+			throw new Error(
+				"No environment detected. Please specify --platform or run in interactive mode.",
+			);
+		}
+	}
 
 	if (isCancel(targetPlatform)) {
 		cancel("Linking cancelled.");
@@ -93,8 +121,17 @@ export async function linkCommand(
 			force: options.force,
 			nonInteractive: options.nonInteractive,
 		});
-		outro(pc.cyan("Link successful!"));
-		UI.tip(`Your agent now has the '${selectedName}' ${selectedType} active.`);
+
+		if (interactive) {
+			outro(pc.cyan("Link successful!"));
+			UI.tip(
+				`Your agent now has the '${selectedName}' ${selectedType} active.`,
+			);
+		} else {
+			UI.success(
+				`Linked ${selectedName} (${selectedType}) to ${targetPlatform}`,
+			);
+		}
 	} catch (err) {
 		UI.error(err instanceof Error ? err.message : String(err), "E002");
 		process.exit(1);
