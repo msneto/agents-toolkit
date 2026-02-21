@@ -46,6 +46,14 @@ atk link rule clean-code
 ```
 *ATK will guide you through choosing a rule and a target platform.*
 
+### Create a new component
+```bash
+atk create command release-notes --edit
+atk create skill api-audit
+atk create agent senior-dev
+```
+*Create scaffolds for commands, skills, rules, and agents. Use `--edit` to open the generated file (`SKILL.md` for skills) immediately.*
+
 To link to every detected environment in the current project:
 ```bash
 atk link rule clean-code --all

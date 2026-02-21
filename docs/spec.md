@@ -63,6 +63,6 @@ When a target file exists and is NOT a managed symlink:
   - In interactive `--all`, conflicts are handled per target with a wizard: `Backup & Link`, `Overwrite`, `Skip Target`, or `Abort Broadcast`.
   - In non-interactive/CI mode, conflicts fail fast.
 - `atk profile [save|switch|list|delete] [name]`: Save and apply link snapshots (optional `--platform` override on switch).
-- `atk create [type] [name]`: Scaffolds standard-compliant capabilities.
+- `atk create [type] [name] [--edit]`: Scaffolds standard-compliant capabilities for `rule`, `skill`, `command`, and `agent`. In interactive mode, prompts to open the created file in your editor.
 - `atk test <name> [-i json]`: Local dry-run debugger for tool logic.
 - `atk mcp [install|run]`: Management for the cross-platform MCP bridge.
