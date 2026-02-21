@@ -73,6 +73,13 @@ export const PLATFORM_CONFIGS: Record<
 		},
 	},
 	claude: {
+		command: {
+			path: ".claude/commands/",
+			filename: "{{name}}",
+			extension: ".md",
+			format: "md",
+			scope: "project",
+		},
 		rule: {
 			path: "",
 			filename: ".clauderules",
@@ -183,6 +190,13 @@ export const GLOBAL_PLATFORM_CONFIGS: Record<
 		},
 	},
 	claude: {
+		command: {
+			path: "~/.claude/commands/",
+			filename: "{{name}}",
+			extension: ".md",
+			format: "md",
+			scope: "global",
+		},
 		skill: {
 			path: "~/.claude/skills/{{name}}/",
 			filename: "SKILL",

@@ -203,7 +203,12 @@ Use these rules when working on...
 }
 
 async function scaffoldPromptCommand(baseDir: string, name: string) {
-	const content = `# ${name} Command
+	const content = `---
+name: ${name}
+description: A new command called ${name}.
+---
+
+# ${name} Command
 
 ## Goal
 Describe the objective of this command.
