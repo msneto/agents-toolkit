@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { Command } from "commander";
 import { createCommand } from "./commands/create";
 import { exploreCommand } from "./commands/explore";
@@ -118,9 +120,10 @@ program
 
 program
 	.command("create")
-	.description("Scaffold a new component (Rule, Skill, Command)")
-	.argument("[type]", "Component type (rule, skill, command)")
+	.description("Scaffold a new component (Rule, Skill, Command, Agent)")
+	.argument("[type]", "Component type (rule, skill, command, agent)")
 	.argument("[name]", "Component name (kebab-case)")
+	.option("--edit", "Open the created file in your default editor")
 	.action(async (type, name, options) => {
 		try {
 			await createCommand(type, name, options);

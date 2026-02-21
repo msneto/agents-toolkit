@@ -1,7 +1,9 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
 	cancel,
+	confirm,
 	intro,
 	isCancel,
 	outro,
@@ -16,7 +18,7 @@ import { UI } from "../utils/ui";
 export async function createCommand(
 	type?: string,
 	name?: string,
-	options: { nonInteractive?: boolean } = {},
+	options: { nonInteractive?: boolean; edit?: boolean } = {},
 ) {
 	const interactive = UI.isInteractive(options);
 	if (interactive) {
@@ -35,6 +37,7 @@ export async function createCommand(
 				{ value: "rule", label: "Rule (Behavioral Constraints)" },
 				{ value: "command", label: "Command (Ready-to-use Prompt)" },
 				{ value: "skill", label: "Skill (Executable Capability)" },
+				{ value: "agent", label: "Agent (Persona Definition)" },
 			],
 		})) as string;
 	}
@@ -80,6 +83,20 @@ export async function createCommand(
 			await scaffoldRule(targetDir, selectedName);
 		} else if (selectedType === "command") {
 			await scaffoldPromptCommand(targetDir, selectedName);
+		} else if (selectedType === "agent") {
+			await scaffoldAgent(targetDir, selectedName);
+		}
+
+		const createdPath = getCreatedPath(targetDir, selectedType, selectedName);
+		const shouldOpenEditor = interactive
+			? ((await confirm({
+					message: "Open in editor now?",
+					initialValue: Boolean(options.edit),
+				})) as boolean)
+			: Boolean(options.edit);
+
+		if (shouldOpenEditor && !isCancel(shouldOpenEditor)) {
+			openInEditor(createdPath);
 		}
 
 		if (interactive) {
@@ -94,6 +111,7 @@ export async function createCommand(
 	} catch (err) {
 		if (interactive) s.stop(pc.red("✖ Creation failed."));
 		UI.error(err instanceof Error ? err.message : String(err), "E015");
+		throw err;
 	}
 }
 
@@ -199,4 +217,54 @@ Inject {{args}} here to handle user input.
 `;
 	await fs.mkdir(baseDir, { recursive: true });
 	await fs.writeFile(path.join(baseDir, `${name}.md`), content);
+}
+
+async function scaffoldAgent(baseDir: string, name: string) {
+	const title = `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+	const content = `---
+name: ${name}
+description: A new agent persona called ${name}.
+---
+
+# ${title} Persona
+
+## Profile
+You are a focused engineering assistant specialized in ${name}.
+
+## Guidelines
+- Be clear and concise.
+- Prioritize safe and maintainable solutions.
+`;
+
+	await fs.mkdir(baseDir, { recursive: true });
+	await fs.writeFile(path.join(baseDir, `${name}.md`), content);
+}
+
+function getCreatedPath(baseDir: string, type: string, name: string): string {
+	if (type === "skill") return path.join(baseDir, name, "SKILL.md");
+	return path.join(baseDir, `${name}.md`);
+}
+
+function openInEditor(targetPath: string) {
+	const editor = process.env.VISUAL || process.env.EDITOR || fallbackEditor();
+	if (!editor) {
+		throw new Error("Failed to open editor: no editor command configured.");
+	}
+
+	const command = `${editor} "${targetPath.replaceAll('"', '\\"')}"`;
+	const result = spawnSync(command, {
+		stdio: "inherit",
+		shell: true,
+	});
+
+	if (result.error || result.status !== 0) {
+		throw new Error(`Failed to open editor using '${editor}'.`);
+	}
+}
+
+function fallbackEditor(): string | undefined {
+	if (process.platform === "darwin") return "open";
+	if (process.platform === "win32") return "start";
+	if (process.platform === "linux") return "xdg-open";
+	return undefined;
 }
