@@ -186,4 +186,168 @@ describe("commands/link", () => {
 		expect(errorSpy).toHaveBeenCalledWith("boom", "E002");
 		expect(exitSpy).toHaveBeenCalledWith(1);
 	});
+
+	it("broadcasts to all detected platforms", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
+			"gemini",
+			"opencode",
+		]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		const createSpy = spyOn(links, "createLink").mockResolvedValue(undefined);
+
+		await linkCommand("rule", "clean", { all: true, nonInteractive: true });
+
+		expect(createSpy).toHaveBeenCalledTimes(2);
+		expect(createSpy).toHaveBeenCalledWith(
+			"/mock/atk/rules/clean.md",
+			expect.objectContaining({ platform: "gemini" }),
+		);
+		expect(createSpy).toHaveBeenCalledWith(
+			"/mock/atk/rules/clean.md",
+			expect.objectContaining({ platform: "opencode" }),
+		);
+	});
+
+	it("throws when all is combined with platform", async () => {
+		await expect(
+			linkCommand("rule", "clean", {
+				all: true,
+				platform: "gemini",
+				nonInteractive: true,
+			}),
+		).rejects.toThrow(/Cannot combine --all with --platform/);
+	});
+
+	it("throws when all is combined with global", async () => {
+		await expect(
+			linkCommand("rule", "clean", {
+				all: true,
+				global: true,
+				nonInteractive: true,
+			}),
+		).rejects.toThrow(/Cannot combine --all with --global/);
+	});
+
+	it("throws when all is used with no detected environments", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([]);
+		await expect(
+			linkCommand("rule", "clean", { all: true, nonInteractive: true }),
+		).rejects.toThrow(/No environment detected/);
+	});
+
+	it("fails with summary when one all-target fails", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
+			"gemini",
+			"opencode",
+		]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		spyOn(links, "createLink")
+			.mockResolvedValueOnce(undefined)
+			.mockRejectedValueOnce(new Error("boom-opencode"));
+		const errorSpy = spyOn(UI, "error").mockImplementation(() => undefined);
+		const exitSpy = spyOn(process, "exit").mockImplementation(() => {
+			throw new Error("exit");
+		});
+
+		await expect(
+			linkCommand("rule", "clean", { all: true, nonInteractive: true }),
+		).rejects.toThrow("exit");
+		expect(errorSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/Linked clean to 1\/2 environments/),
+			"E002",
+		);
+		expect(exitSpy).toHaveBeenCalledWith(1);
+	});
+
+	it("fails with all-target summary when every broadcast target fails", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
+			"gemini",
+			"opencode",
+		]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		spyOn(links, "createLink").mockRejectedValue(new Error("boom-all"));
+		const errorSpy = spyOn(UI, "error").mockImplementation(() => undefined);
+		const exitSpy = spyOn(process, "exit").mockImplementation(() => {
+			throw new Error("exit");
+		});
+
+		await expect(
+			linkCommand("rule", "clean", { all: true, nonInteractive: true }),
+		).rejects.toThrow("exit");
+		expect(errorSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/Failed to link clean to all environments/),
+			"E002",
+		);
+		expect(exitSpy).toHaveBeenCalledWith(1);
+	});
+
+	it("shows interactive broadcast info and success outro", async () => {
+		spyOn(UI, "isInteractive").mockReturnValue(true);
+		const infoSpy = spyOn(UI, "info").mockImplementation(() => undefined);
+		const tipSpy = spyOn(UI, "tip").mockImplementation(() => undefined);
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue(["gemini"]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		spyOn(links, "createLink").mockResolvedValue(undefined);
+
+		await linkCommand("rule", "clean", { all: true });
+
+		expect(infoSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/Broadcasting to 1 environments/),
+		);
+		expect(prompts.outro).toHaveBeenCalled();
+		expect(tipSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/active across detected environments/),
+		);
+	});
+
+	it("continues broadcast when one target is skipped", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
+			"gemini",
+			"opencode",
+		]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		spyOn(links, "createLink")
+			.mockResolvedValueOnce(undefined)
+			.mockRejectedValueOnce(
+				new links.LinkSkipError("Skipped current target."),
+			);
+		const successSpy = spyOn(UI, "success").mockImplementation(() => undefined);
+
+		await linkCommand("rule", "clean", { all: true, nonInteractive: true });
+
+		expect(successSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/Linked clean \(rule\) to 1 environments: gemini/),
+		);
+	});
+
+	it("stops broadcast gracefully when user aborts", async () => {
+		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
+			"gemini",
+			"opencode",
+		]);
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/rules/clean.md",
+		);
+		spyOn(links, "createLink")
+			.mockResolvedValueOnce(undefined)
+			.mockRejectedValueOnce(
+				new links.LinkAbortError("Broadcast linking aborted."),
+			);
+		const tipSpy = spyOn(UI, "tip").mockImplementation(() => undefined);
+
+		await linkCommand("rule", "clean", { all: true, nonInteractive: true });
+		expect(tipSpy).toHaveBeenCalledWith(
+			expect.stringMatching(/Run 'atk status'/),
+		);
+	});
 });

@@ -181,20 +181,26 @@ describe("core/links", () => {
 			expect(unlinkSpy).toHaveBeenCalledWith("/tmp/rule.md");
 		});
 
-		it("exits when conflict action is abort", async () => {
+		it("throws abort error when conflict action is abort", async () => {
 			spyOn(fs, "access").mockResolvedValue(undefined);
 			spyOn(fs, "lstat").mockResolvedValue({
 				isSymbolicLink: () => false,
 			} as any);
 			spyOn(prompts, "select").mockResolvedValue("abort" as any);
-			const exitSpy = spyOn(process, "exit").mockImplementation(() => {
-				throw new Error("exit");
-			});
-
 			await expect(
 				links.handlePathConflict("/tmp/rule.md", {}),
-			).rejects.toThrow("exit");
-			expect(exitSpy).toHaveBeenCalledWith(0);
+			).rejects.toThrow(/Linking aborted/);
+		});
+
+		it("throws skip error when skip is selected in broadcast mode", async () => {
+			spyOn(fs, "access").mockResolvedValue(undefined);
+			spyOn(fs, "lstat").mockResolvedValue({
+				isSymbolicLink: () => false,
+			} as any);
+			spyOn(prompts, "select").mockResolvedValue("skip" as any);
+			await expect(
+				links.handlePathConflict("/tmp/rule.md", { broadcast: true }),
+			).rejects.toThrow(/Skipped current target/);
 		});
 
 		it("normalizes paths with tilde", () => {
