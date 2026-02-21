@@ -3,7 +3,7 @@ import path from "node:path";
 import { cancel, intro, isCancel, outro, select } from "@clack/prompts";
 import pc from "picocolors";
 import { ATKConfig } from "../core/config";
-import { createLink } from "../core/links";
+import { createLink, resolveSourceFile } from "../core/links";
 import {
 	type ComponentType,
 	detectProjectPlatforms,
@@ -40,6 +40,7 @@ export async function linkCommand(
 				{ value: "command", label: "Command (Ready-to-use Prompt)" },
 				{ value: "skill", label: "Skill (Executable Capability)" },
 				{ value: "agent", label: "Agent (Persona Definition)" },
+				{ value: "bundle", label: "Bundle (Group of components)" },
 			],
 		})) as ComponentType;
 	}
@@ -52,10 +53,18 @@ export async function linkCommand(
 	// 2. Resolve Name
 	let selectedName = name;
 	if (!selectedName) {
-		const componentDir = path.join(
-			atkRoot,
-			selectedType === "command" ? "commands" : `${selectedType}s`,
-		);
+		let dirName = "";
+		switch (selectedType) {
+			case "command":
+				dirName = "commands";
+				break;
+			case "bundle":
+				dirName = "bundles";
+				break;
+			default:
+				dirName = `${selectedType}s`;
+		}
+		const componentDir = path.join(atkRoot, dirName);
 		const files = await getComponentFiles(componentDir);
 
 		if (files.length === 0) {
@@ -142,32 +151,14 @@ async function getComponentFiles(dir: string): Promise<string[]> {
 	try {
 		const entries = await fs.readdir(dir, { withFileTypes: true });
 		return entries
-			.filter((e) => (e.isFile() && e.name.endsWith(".md")) || e.isDirectory())
-			.map((e) => e.name.replace(".md", ""));
+			.filter(
+				(e) =>
+					(e.isFile() &&
+						(e.name.endsWith(".md") || e.name.endsWith(".json"))) ||
+					e.isDirectory(),
+			)
+			.map((e) => e.name.replace(".md", "").replace(".json", ""));
 	} catch {
 		return [];
-	}
-}
-
-async function resolveSourceFile(
-	root: string,
-	type: ComponentType,
-	name: string,
-): Promise<string> {
-	const dir = type === "command" ? "commands" : `${type}s`;
-	const p = path.join(root, dir, `${name}.md`);
-	const dirPath = path.join(root, dir, name);
-
-	try {
-		await fs.access(p);
-		return p;
-	} catch {
-		try {
-			const skillMdPath = path.join(dirPath, "SKILL.md");
-			await fs.access(skillMdPath);
-			return skillMdPath;
-		} catch {
-			throw new Error(`Component file not found: ${p} or ${dirPath}/SKILL.md`);
-		}
 	}
 }

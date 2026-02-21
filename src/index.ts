@@ -4,6 +4,7 @@ import { exploreCommand } from "./commands/explore";
 import { initCommand } from "./commands/init";
 import { linkCommand } from "./commands/link";
 import { mcpCommand } from "./commands/mcp";
+import { profileCommand } from "./commands/profile";
 import { statusCommand } from "./commands/status";
 import { testCommand } from "./commands/test";
 import { UI } from "./utils/ui";
@@ -16,6 +17,26 @@ program
 	.version("1.0.0")
 	.option("--non-interactive", "Disable interactive wizards and prompts", false)
 	.option("--ci", "Alias for --non-interactive", false);
+
+program
+	.command("profile")
+	.description("Manage and apply link snapshots (profiles)")
+	.argument("[action]", "Action to perform (save, switch, list, delete)")
+	.argument("[name]", "Profile name")
+	.option("-p, --platform <platform>", "Target platform for profile switch")
+	.action(async (action, name, cmdOptions) => {
+		const globalOptions = program.opts();
+		const options = {
+			...cmdOptions,
+			nonInteractive: globalOptions.nonInteractive || globalOptions.ci,
+		};
+		try {
+			await profileCommand(action, name, options);
+		} catch (err) {
+			UI.error(err instanceof Error ? err.message : String(err), "E008");
+			process.exit(1);
+		}
+	});
 
 program
 	.command("init")
@@ -35,9 +56,9 @@ program
 program
 	.command("link")
 	.description(
-		"Link a component (Rule, Skill, Command, Agent) to your environment",
+		"Link a component (Rule, Skill, Command, Agent, Bundle) to your environment",
 	)
-	.argument("[type]", "Component type (rule, skill, command, agent)")
+	.argument("[type]", "Component type (rule, skill, command, agent, bundle)")
 	.argument("[name]", "Component name")
 	.option("-f, --force", "Force overwrite of existing files")
 	.option(

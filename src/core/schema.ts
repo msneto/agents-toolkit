@@ -3,24 +3,22 @@ import { z } from "zod";
 /**
  * JSON Schema subset for tool parameters and outputs.
  */
-const JsonSchema = z.lazy(() =>
-	z.object({
-		type: z.enum([
-			"object",
-			"string",
-			"number",
-			"integer",
-			"boolean",
-			"array",
-			"null",
-		]),
-		description: z.string().optional(),
-		properties: z.record(z.any()).optional(),
-		required: z.array(z.string()).optional(),
-		items: z.any().optional(),
-		enum: z.array(z.any()).optional(),
-	}),
-);
+const JsonSchema = z.object({
+	type: z.enum([
+		"object",
+		"string",
+		"number",
+		"integer",
+		"boolean",
+		"array",
+		"null",
+	]),
+	description: z.string().optional(),
+	properties: z.record(z.any()).optional(),
+	required: z.array(z.string()).optional(),
+	items: z.any().optional(),
+	enum: z.array(z.any()).optional(),
+});
 
 /**
  * Tool Intermediate Representation (IR) Schema.
@@ -41,12 +39,13 @@ export const ToolIRSchema = z.object({
 		.regex(/^\d+\.\d+\.\d+$/, "Version must follow semver (x.y.z).")
 		.default("1.0.0"),
 
-	parameters: JsonSchema.describe(
-		"Input parameters for the tool (JSON Schema format).",
-	),
-	output: JsonSchema.optional().describe(
-		"Expected output structure (JSON Schema format).",
-	),
+	parameters: z
+		.any()
+		.describe("Input parameters for the tool (JSON Schema format)."),
+	output: z
+		.any()
+		.optional()
+		.describe("Expected output structure (JSON Schema format)."),
 
 	examples: z
 		.array(
@@ -99,7 +98,7 @@ export const ManifestSchema = z.object({
 		.string()
 		.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Name must be kebab-case."),
 	version: z.string().default("1.0.0"),
-	type: z.enum(["rule", "skill", "command", "agent"]),
+	type: z.enum(["rule", "skill", "command", "agent", "bundle"]),
 	description: z.string().max(1024, "Description must be under 1024 chars."),
 	author: z.string().optional(),
 	tags: z.array(z.string()).default([]),
@@ -109,3 +108,18 @@ export const ManifestSchema = z.object({
 });
 
 export type Manifest = z.infer<typeof ManifestSchema>;
+
+/**
+ * Bundle Schema for grouping components.
+ */
+export const BundleSchema = ManifestSchema.extend({
+	type: z.literal("bundle"),
+	components: z.array(
+		z.object({
+			type: z.enum(["rule", "skill", "command", "agent"]),
+			name: z.string(),
+		}),
+	),
+});
+
+export type Bundle = z.infer<typeof BundleSchema>;

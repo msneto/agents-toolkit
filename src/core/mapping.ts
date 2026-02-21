@@ -5,7 +5,7 @@ export type SupportedPlatform =
 	| "claude"
 	| "cursor"
 	| "windsurf";
-export type ComponentType = "rule" | "command" | "skill" | "agent";
+export type ComponentType = "rule" | "command" | "skill" | "agent" | "bundle";
 
 export interface TargetConfig {
 	path: string;
@@ -170,6 +170,13 @@ export const GLOBAL_PLATFORM_CONFIGS: Record<
 		agent: {
 			path: "~/.gemini/agents/",
 			filename: "{{name}}",
+			extension: ".md",
+			format: "md",
+			scope: "global",
+		},
+		rule: {
+			path: "~/.gemini/",
+			filename: "GEMINI",
 			extension: ".md",
 			format: "md",
 			scope: "global",

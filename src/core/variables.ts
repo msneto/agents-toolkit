@@ -105,7 +105,9 @@ async function loadEnvAtk(): Promise<Record<string, string>> {
 	}
 }
 
-async function loadJsonContext(p: string): Promise<Record<string, string>> {
+export async function loadJsonContext(
+	p: string,
+): Promise<Record<string, string>> {
 	try {
 		const content = await fs.readFile(p, "utf-8");
 		return JSON.parse(content);
@@ -114,7 +116,7 @@ async function loadJsonContext(p: string): Promise<Record<string, string>> {
 	}
 }
 
-async function triggerVariableWizard(varName: string): Promise<string> {
+export async function triggerVariableWizard(varName: string): Promise<string> {
 	const result = await text({
 		message: `I found a new variable: ${pc.magenta(`{{${varName}}}`)}. What is its value?`,
 		placeholder: `Enter value for ${varName}...`,

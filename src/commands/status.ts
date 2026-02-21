@@ -1,9 +1,9 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 import { intro, note, outro } from "@clack/prompts";
 import pc from "picocolors";
 import { ATKConfig } from "../core/config";
-import { SUPPORTED_PLATFORMS } from "../core/mapping";
+import { findActiveLinks } from "../core/links";
+import { detectProjectPlatforms, SUPPORTED_PLATFORMS } from "../core/mapping";
 import { alignColumns, truncatePath } from "../utils/text";
 import { UI } from "../utils/ui";
 
@@ -15,7 +15,11 @@ export async function statusCommand() {
 	const projectRoot = process.cwd();
 
 	// 1. Detected Environments
-	const environments = await detectEnvironments(projectRoot);
+	const detectedPlatforms = await detectProjectPlatforms(projectRoot);
+	const environments = SUPPORTED_PLATFORMS.filter((p) =>
+		detectedPlatforms.includes(p.value),
+	);
+
 	const envRows = environments.map((e) => [UI.icons.env, e.label]);
 	const envText =
 		environments.length > 0
@@ -28,13 +32,13 @@ export async function statusCommand() {
 	const links = await findActiveLinks(projectRoot);
 	const linkRows = links.map((l) => [
 		pc.green(UI.icons.link),
-		pc.bold(l.name),
+		pc.bold(path.relative(projectRoot, l.fullPath)),
 		pc.dim("->"),
 		pc.dim(truncatePath(l.target, 50)),
 	]);
 	const linksText =
 		links.length > 0
-			? alignColumns(linkRows, [3, 20, 4, 50])
+			? alignColumns(linkRows, [3, 30, 4, 50])
 			: pc.dim("No active ATK links found in this project.");
 
 	note(linksText, "Active Links");
@@ -46,71 +50,11 @@ export async function statusCommand() {
 	];
 	note(alignColumns(configRows, [3, 10, 60]), "Toolkit Configuration");
 
+	if (links.length === 0) {
+		UI.tip("Try linking a component: atk link rule clean-code");
+	} else {
+		UI.tip("Use 'atk explore' to find more components to link.");
+	}
+
 	outro(pc.cyan("Status check complete."));
-}
-
-async function detectEnvironments(projectRoot: string) {
-	const detected = [];
-	for (const platform of SUPPORTED_PLATFORMS) {
-		const markers: Record<string, string[]> = {
-			opencode: [".opencode", "AGENTS.md"],
-			gemini: [".gemini", "GEMINI.md"],
-			claude: [".clauderules"],
-			cursor: [".cursorrules", ".cursor/rules"],
-			windsurf: [".windsurfrules"],
-		};
-
-		const platformMarkers = markers[platform.value as string] || [];
-		for (const marker of platformMarkers) {
-			try {
-				await fs.access(path.join(projectRoot, marker));
-				detected.push(platform);
-				break;
-			} catch {
-				// Marker not found
-			}
-		}
-	}
-	return detected;
-}
-
-async function findActiveLinks(projectRoot: string) {
-	const activeLinks: { name: string; target: string }[] = [];
-	const globalConfigPath = ATKConfig.path();
-	const cacheDirName = path.basename(path.dirname(globalConfigPath)); // e.g. atk-nodejs
-	const searchPaths = [
-		projectRoot,
-		path.join(projectRoot, ".opencode"),
-		path.join(projectRoot, ".opencode", "commands"),
-		path.join(projectRoot, ".gemini"),
-		path.join(projectRoot, ".gemini", "commands"),
-		path.join(projectRoot, ".claude"),
-		path.join(projectRoot, ".cursor"),
-	];
-
-	for (const p of searchPaths) {
-		try {
-			const entries = await fs.readdir(p, { withFileTypes: true });
-			for (const entry of entries) {
-				if (entry.isSymbolicLink()) {
-					const fullPath = path.join(p, entry.name);
-					const target = await fs.readlink(fullPath);
-					if (
-						target.includes(cacheDirName) ||
-						target.includes(".atk/cache") ||
-						target.includes("agents-toolkit")
-					) {
-						const displayName =
-							p === projectRoot
-								? entry.name
-								: `${path.basename(p)}/${entry.name}`;
-						activeLinks.push({ name: displayName, target });
-					}
-				}
-			}
-		} catch {
-			// Path not found
-		}
-	}
-	return activeLinks;
 }
