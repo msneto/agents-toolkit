@@ -55,49 +55,61 @@ Phase 4: Tool Runtime & Hooks @1.1.0
 		- Add timeout logic (5s default) with graceful SIGTERM handling @done(2026-02-21)
 		- Implement persistent hook logs in .atk/logs/ @done(2026-02-21)
 		- Add mandatory 'pre_link' check for required system binaries (e.g. ffmpeg, jq) @done(2026-02-21)
-	- Transpilation
+	- Transpilation @done(2026-02-21)
 		- Research platform-specific formats (OpenCode, Gemini, Codex, Claude, Cursor) @done(2026-02-21)
 		- Implement IR -> Gemini CLI TOML generator @done(2026-02-21)
-		- Build MCP server bridge for Claude Code (JSON-RPC wrapper)
+		- Build MCP server bridge for Claude Code (JSON-RPC wrapper) @done(2026-02-21)
 		- Create "Executable Bridge" shell scripts for non-standard agents
 	- Debugging @done(2026-02-21)
 		- Create atk test <tool> command for local dry-run @done(2026-02-21)
 		- Implement mock input injection via --input flag or interactive prompt @done(2026-02-21)
 		- Add capture of stdout/stderr for tool execution debugging @done(2026-02-21)
 
-Phase 5: Advanced Orchestration @1.2.0
+Phase 5: ATK MCP Server @1.2.0
+	The MCP Server allows all ATK skills to be exposed to Claude, Cursor, and OpenCode via a single entry point.
+	- Core Server Architecture:
+		- Implement JSON-RPC 2.0 transport over stdio using Bun @done(2026-02-21)
+		- Build dynamic tool discovery (scanning ATK_ROOT/skills/*/tool.json) @done(2026-02-21)
+	- Tool Execution Bridge:
+		- Map MCP "callTool" requests to internal Bun.spawn execution @done(2026-02-21)
+		- Handle STDIN/STDOUT JSON piping for tool data @done(2026-02-21)
+		- Integrate SecurityShield auditing into the MCP execution loop @todo
+	- Onboarding:
+		- Add atk mcp install command to register the server in agent settings @done(2026-02-21)
+
+Phase 6: Advanced Orchestration @1.3.0
 	- Scaffolding
 		Templates follow "Prompts-as-Markdown" best practices (Instructions, Context, Examples).
-		- Implement atk create <type> <name> interactive wizard
-		- Build boilerplate templates for Rules (Behavior, Examples)
-		- Create "Skill Starter" template with Bun/TS index.ts and manifest
-		- Auto-generate valid manifest.json with author/version info
+		- Implement atk create <type> <name> interactive wizard @todo
+		- Build boilerplate templates for Rules (Behavior, Examples) @todo
+		- Create "Skill Starter" template with Bun/TS index.ts and manifest @todo
+		- Auto-generate valid manifest.json with author/version info @todo
 	- Bundling
 		Bundles are high-level project profiles (e.g. "React Web Stack").
-		- Implement bundle.json schema to define component groups
-		- Add dependency resolution (e.g. Skill A requires Rule B)
-		- Support recursive linking of all bundle members
+		- Implement bundle.json schema to define component groups @todo
+		- Add dependency resolution (e.g. Skill A requires Rule B) @todo
+		- Support recursive linking of all bundle members @todo
 	- Profiles
 		Profiles allow hot-swapping entire agentic environment states.
-		- Implement atk profile save <name> to snapshot current symlinks
-		- Create atk profile switch <name> for instant environment swapping
-		- Build profile diff tool to see changes between snapshots
+		- Implement atk profile save <name> to snapshot current symlinks @todo
+		- Create atk profile switch <name> for instant environment swapping @todo
+		- Build profile diff tool to see changes between snapshots @todo
 
-Phase 6: Ingestion & Scale @2.0.0
+Phase 7: Ingestion & Scale @2.0.0
 	- Harvesting
 		The process of centralizing existing configs into the ATK repo.
-		- Build path heuristics for Cursor, Claude, and Gemini CLI defaults
-		- Implement recursive scan of user home directory for unmanaged prompts
-		- Create collision wizard with side-by-side diff view
-		- Implement "Semantic Rename" (e.g. name-cursor.md) during import
+		- Build path heuristics for Cursor, Claude, and Gemini CLI defaults @todo
+		- Implement recursive scan of user home directory for unmanaged prompts @todo
+		- Create collision wizard with side-by-side diff view @todo
+		- Implement "Semantic Rename" (e.g. name-cursor.md) during import @todo
 	- Secret Extraction
-		- Add regex-based detection for API keys (OpenAI, Anthropic, Gemini)
-		- Build "PII Masking" to replace keys with {{SECRET_VAR}} placeholders
-		- Auto-populate .env.atk during the harvesting process
+		- Add regex-based detection for API keys (OpenAI, Anthropic, Gemini) @todo
+		- Build "PII Masking" to replace keys with {{SECRET_VAR}} placeholders @todo
+		- Auto-populate .env.atk during the harvesting process @todo
 	- Auto-Repair
-		- Implement "Integrity Check" on every ATK command run
-		- Build batch-repair logic to update all symlinks if ATK_ROOT moves
-		- Add --prune flag to remove dangling/orphaned links
+		- Implement "Integrity Check" on every ATK command run @todo
+		- Build batch-repair logic to update all symlinks if ATK_ROOT moves @todo
+		- Add --prune flag to remove dangling/orphaned links @todo
 
 Project Metadata:
 	- Version: 0.8.0 (Internal) -> 1.0.0 (Public Target)

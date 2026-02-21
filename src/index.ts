@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { initCommand } from "./commands/init";
 import { linkCommand } from "./commands/link";
+import { mcpCommand } from "./commands/mcp";
 import { testCommand } from "./commands/test";
 import { UI } from "./utils/ui";
 
@@ -36,8 +37,14 @@ program
 	.argument("[type]", "Component type (rule, skill, command, agent)")
 	.argument("[name]", "Component name")
 	.option("-f, --force", "Force overwrite of existing files")
-	.option("-g, --global", "Link to global agent configuration (e.g. ~/.gemini/)")
-	.option("-p, --platform <platform>", "Target agent platform (e.g. gemini, cursor)")
+	.option(
+		"-g, --global",
+		"Link to global agent configuration (e.g. ~/.gemini/)",
+	)
+	.option(
+		"-p, --platform <platform>",
+		"Target agent platform (e.g. gemini, cursor)",
+	)
 	.option("--all", "Broadcast to all detected agent environments")
 	.action(async (type, name, cmdOptions) => {
 		const globalOptions = program.opts();
@@ -68,6 +75,19 @@ program
 			await testCommand(name, options);
 		} catch (err) {
 			UI.error(err instanceof Error ? err.message : String(err), "E003");
+			process.exit(1);
+		}
+	});
+
+program
+	.command("mcp")
+	.description("Manage and run the ATK MCP Server")
+	.argument("[action]", "Action to perform (run, install)")
+	.action(async (action, options) => {
+		try {
+			await mcpCommand(action, options);
+		} catch (err) {
+			UI.error(err instanceof Error ? err.message : String(err), "E004");
 			process.exit(1);
 		}
 	});
