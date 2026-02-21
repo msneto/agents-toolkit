@@ -4,6 +4,7 @@ import { cancel, intro, isCancel, note, outro, select } from "@clack/prompts";
 import pc from "picocolors";
 import { ATKConfig } from "../core/config";
 import type { ComponentType } from "../core/mapping";
+import { alignColumns } from "../utils/text";
 import { UI } from "../utils/ui";
 import { linkCommand } from "./link";
 
@@ -56,14 +57,12 @@ export async function exploreCommand(
 
 	// 3. Display Results
 	if (interactive) {
-		const listText = filtered
-			.map((c) => {
-				const icon = c.type === "rule" ? "📏" : c.type === "skill" ? "🛠️" : "💬";
-				return `${icon} ${pc.bold(c.name)} ${pc.dim(`(${c.type})`)} - ${c.description}`;
-			})
-			.join("\n");
+		const rows = filtered.map((c) => {
+			const icon = UI.icons[c.type as keyof typeof UI.icons] || UI.icons.bullet;
+			return [icon, pc.bold(c.name), pc.dim(`(${c.type})`), c.description];
+		});
 
-		note(listText, "Available Components");
+		note(alignColumns(rows, [3, 20, 12, 50]), "Available Components");
 
 		const action = await select({
 			message: "Would you like to link a component?",

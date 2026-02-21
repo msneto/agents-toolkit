@@ -4,6 +4,7 @@ import { intro, note, outro } from "@clack/prompts";
 import pc from "picocolors";
 import { ATKConfig } from "../core/config";
 import { SUPPORTED_PLATFORMS } from "../core/mapping";
+import { alignColumns, truncatePath } from "../utils/text";
 import { UI } from "../utils/ui";
 
 export async function statusCommand() {
@@ -15,32 +16,35 @@ export async function statusCommand() {
 
 	// 1. Detected Environments
 	const environments = await detectEnvironments(projectRoot);
+	const envRows = environments.map((e) => [UI.icons.env, e.label]);
 	const envText =
 		environments.length > 0
-			? environments.map((e) => `${pc.magenta("●")} ${e.label}`).join("\n")
+			? alignColumns(envRows, [3, 20])
 			: pc.dim("No agent environments detected in this project.");
 
 	note(envText, "Detected Environments");
 
 	// 2. Active Links (Project Scope)
 	const links = await findActiveLinks(projectRoot);
+	const linkRows = links.map((l) => [
+		pc.green(UI.icons.link),
+		pc.bold(l.name),
+		pc.dim("->"),
+		pc.dim(truncatePath(l.target, 50)),
+	]);
 	const linksText =
 		links.length > 0
-			? links
-					.map(
-						(l) => `${pc.green("✔")} ${pc.bold(l.name)} -> ${pc.dim(l.target)}`,
-					)
-					.join("\n")
+			? alignColumns(linkRows, [3, 20, 4, 50])
 			: pc.dim("No active ATK links found in this project.");
 
 	note(linksText, "Active Links");
 
 	// 3. Toolkit Info
-	note(
-		`Root: ${pc.magenta(config.atkRoot)}
-Config: ${pc.dim(ATKConfig.path())}`,
-		"Toolkit Configuration",
-	);
+	const configRows = [
+		[UI.icons.bullet, "Root", pc.magenta(truncatePath(config.atkRoot, 60))],
+		[UI.icons.bullet, "Config", pc.dim(truncatePath(ATKConfig.path(), 60))],
+	];
+	note(alignColumns(configRows, [3, 10, 60]), "Toolkit Configuration");
 
 	outro(pc.cyan("Status check complete."));
 }

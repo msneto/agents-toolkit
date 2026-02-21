@@ -32,10 +32,26 @@ export const UI = {
 	},
 
 	success: (msg: string) => {
-		// Enforce 1 space after icon
 		console.log(`\n${pc.green("✔")} ${msg}\n`);
 	},
 
+	icons: {
+		rule: "◈",
+		skill: "⬢",
+		command: "☇",
+		agent: "◎",
+		env: "⬡",
+		bullet: "•",
+		link: "✔",
+		error: "✖",
+		warn: "⚠",
+		info: "ℹ",
+	},
+
+	grid: (rows: string[][], gutters: number[]) => {
+		const { alignColumns } = require("./text");
+		return alignColumns(rows, gutters);
+	},
 	warn: (msg: string) => {
 		// Enforce 1 space after icon
 		console.log(`\n${pc.yellow("⚠")} ${pc.yellow(msg)}\n`);
