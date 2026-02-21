@@ -107,17 +107,27 @@ export async function createLink(
 	s.start(`Linking ${UI.path(sourcePath)} to ${UI.path(targetPath)}`);
 
 	try {
-		const content = await fs.readFile(sourcePath, "utf-8");
-		const vars = scanVariables(content);
-
 		let finalSource = sourcePath;
-		let finalContent = content;
+		let finalContent = "";
 
+		if (isSkill) {
+			const skillMdPath = path.join(componentDir, "SKILL.md");
+			try {
+				finalContent = await fs.readFile(skillMdPath, "utf-8");
+				finalSource = skillMdPath;
+			} catch {
+				finalContent = await fs.readFile(sourcePath, "utf-8");
+			}
+		} else {
+			finalContent = await fs.readFile(sourcePath, "utf-8");
+		}
+
+		const vars = scanVariables(finalContent);
 		// 4. Resolve Variables
 		const resolvedValues =
 			vars.length > 0 ? await resolveVariables(vars, { nonInteractive }) : {};
 
-		finalContent = replaceVariables(content, resolvedValues);
+		finalContent = replaceVariables(finalContent, resolvedValues);
 
 		// 5. Transpile
 		const transpilation = transpile(finalContent, name, targetConfig);

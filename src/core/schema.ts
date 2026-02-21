@@ -92,16 +92,20 @@ export const ToolIRSchema = z.object({
 export type ToolIR = z.infer<typeof ToolIRSchema>;
 
 /**
- * General Component Manifest Schema.
+ * General Component Manifest Schema (aligned with agentskills.io).
  */
 export const ManifestSchema = z.object({
-	name: z.string(),
-	version: z.string(),
+	name: z
+		.string()
+		.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Name must be kebab-case."),
+	version: z.string().default("1.0.0"),
 	type: z.enum(["rule", "skill", "command", "agent"]),
-	description: z.string(),
+	description: z.string().max(1024, "Description must be under 1024 chars."),
 	author: z.string().optional(),
 	tags: z.array(z.string()).default([]),
-	platforms: z.array(z.string()).default(["all"]),
+	license: z.string().optional(),
+	compatibility: z.array(z.string()).default(["all"]),
+	metadata: z.record(z.string()).optional(),
 });
 
 export type Manifest = z.infer<typeof ManifestSchema>;

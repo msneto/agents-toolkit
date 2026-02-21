@@ -1,0 +1,20 @@
+{
+	"name": "get_test_standard_skill",
+	"description": "Detailed description of what test-standard-skill does for the agent.",
+	"version": "1.0.0",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"query": {
+				"type": "string",
+				"description": "Search query or input"
+			}
+		},
+		"required": ["query"]
+	},
+	"runtime": {
+		"engine": "bun",
+		"entrypoint": "src/index.ts",
+		"timeout": 5000
+	}
+}

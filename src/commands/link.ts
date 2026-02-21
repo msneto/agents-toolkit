@@ -105,7 +105,7 @@ async function getComponentFiles(dir: string): Promise<string[]> {
 	try {
 		const entries = await fs.readdir(dir, { withFileTypes: true });
 		return entries
-			.filter((e) => e.isFile() && e.name.endsWith(".md"))
+			.filter((e) => (e.isFile() && e.name.endsWith(".md")) || e.isDirectory())
 			.map((e) => e.name.replace(".md", ""));
 	} catch {
 		return [];
@@ -119,10 +119,18 @@ async function resolveSourceFile(
 ): Promise<string> {
 	const dir = type === "command" ? "commands" : `${type}s`;
 	const p = path.join(root, dir, `${name}.md`);
+	const dirPath = path.join(root, dir, name);
+
 	try {
 		await fs.access(p);
 		return p;
 	} catch {
-		throw new Error(`Component file not found: ${p}`);
+		try {
+			const skillMdPath = path.join(dirPath, "SKILL.md");
+			await fs.access(skillMdPath);
+			return skillMdPath;
+		} catch {
+			throw new Error(`Component file not found: ${p} or ${dirPath}/SKILL.md`);
+		}
 	}
 }

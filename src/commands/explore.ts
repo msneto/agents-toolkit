@@ -86,19 +86,26 @@ async function discoverAllComponents(atkRoot: string) {
 						description: "Prompt-based capability",
 					});
 				} else if (entry.isDirectory()) {
-					// Check for manifest.json
+					// Check for SKILL.md (Standard) or manifest.json (Internal)
+					const skillMdPath = path.join(fullDir, entry.name, "SKILL.md");
 					const manifestPath = path.join(fullDir, entry.name, "manifest.json");
+
+					let description = "Modular capability";
 					try {
-						const raw = await fs.readFile(manifestPath, "utf-8");
-						const manifest = JSON.parse(raw);
-						components.push({
-							type,
-							name: entry.name,
-							description: manifest.description || "Modular skill",
-						});
+						const content = await fs.readFile(skillMdPath, "utf-8");
+						const match = content.match(/description:\s*(.*)/);
+						if (match) description = match[1].trim();
 					} catch {
-						// Not a component directory
+						try {
+							const raw = await fs.readFile(manifestPath, "utf-8");
+							const manifest = JSON.parse(raw);
+							description = manifest.description || description;
+						} catch {
+							/* Skip */
+						}
 					}
+
+					components.push({ type, name: entry.name, description });
 				}
 			}
 		} catch {

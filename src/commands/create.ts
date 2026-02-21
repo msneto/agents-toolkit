@@ -93,7 +93,12 @@ export async function createCommand(
 async function scaffoldSkill(baseDir: string, name: string) {
 	const skillDir = path.join(baseDir, name);
 	const srcDir = path.join(skillDir, "src");
+	const scriptsDir = path.join(skillDir, "scripts");
+	const referencesDir = path.join(skillDir, "references");
+
 	await fs.mkdir(srcDir, { recursive: true });
+	await fs.mkdir(scriptsDir, { recursive: true });
+	await fs.mkdir(referencesDir, { recursive: true });
 
 	const manifest = {
 		name,
@@ -102,7 +107,7 @@ async function scaffoldSkill(baseDir: string, name: string) {
 		description: `A new skill called ${name}`,
 		author: "Your Name",
 		tags: [],
-		platforms: ["all"],
+		compatibility: ["all"],
 	};
 
 	const tool = {
@@ -123,13 +128,19 @@ async function scaffoldSkill(baseDir: string, name: string) {
 		},
 	};
 
-	const prompt = `# ${name} Skill
+	const skillMd = `---
+name: ${name}
+description: A new skill called ${name}
+---
 
-## Description
+# ${name} Skill
+
+## Overview
 Detailed instructions for the agent on how to use this skill.
 
 ## Usage Examples
-- "Use ${name} to..."`;
+- "Use ${name} to..."
+`;
 
 	const indexTs = `/**
  * Logic for ${name} skill.
@@ -148,7 +159,7 @@ console.log(JSON.stringify({ result: "Hello from ${name}!", input }));
 		path.join(skillDir, "tool.json"),
 		JSON.stringify(tool, null, 2),
 	);
-	await fs.writeFile(path.join(skillDir, "prompt.md"), prompt);
+	await fs.writeFile(path.join(skillDir, "SKILL.md"), skillMd);
 	await fs.writeFile(path.join(srcDir, "index.ts"), indexTs);
 }
 
