@@ -1,144 +1,63 @@
-# Agents Toolkit (ATK) - Technical Specification v1.0
+# Agents Toolkit (ATK) - Technical Specification v1.1
 
-> **Status:** APPROVED FOR BUILD
-> **Version:** 1.0.0 (The "Ruthless Core")
+> **Status:** APPROVED & IMPLEMENTED (Core)
+> **Version:** 1.1.0
 > **Date:** 2026-02-21
-> **Focus:** Determinism, Stability, Unix-Compliance, CI-Readiness
+> **Focus:** Determinism, Multi-Agent Mapping, standard-compliance
 
 ---
 
-## 1. Project Definition
-**Agents Toolkit (ATK)** is a local control plane for agentic coding environments. It creates a deterministic runtime for Agents, Skills, Rules, and Tools by managing symlinks and resolving configuration variables across disparate ecosystems (Cursor, Gemini, Claude, etc.).
+## 1. Internal Architecture (Functional)
 
-**Core Philosophy:**
-*   **Determinism**: Output is predictable. No "magic" fixes.
-*   **Explicit over Implicit**: Changes are reported before execution.
-*   **Unix-Native**: Respects standard streams, exit codes, and piping.
-*   **CI-Ready**: Fails fast in headless modes.
+ATK is built as a series of stateless core functions to ensure high-speed execution and testability.
+
+### 1.1 Key Modules
+- **`links.ts`**: The primary engine for `createLink`. Handles variable resolution, transpilation, and symlink creation.
+- **`variables.ts`**: Layered resolution engine (Secret > Global > Project) with CI-safe failure modes.
+- **`mapping.ts`**: Central registry of agentic environments and their specific file/path requirements.
+- **`transpiler.ts`**: Logic for converting toolkit components (Markdown) into agent formats (TOML, JSON).
+- **`mcp-server.ts`**: A standard Model Context Protocol server exposing toolkit skills.
 
 ---
 
-## 2. Directory Structure (The Source of Truth)
+## 2. Platform Mapping Registry
 
+| Platform | Root Marker | Command Path | Format |
+| :--- | :--- | :--- | :--- |
+| **OpenCode** | `.opencode` | `.opencode/commands/` | Markdown |
+| **Gemini CLI** | `.gemini` | `.gemini/commands/` | TOML (Transpiled) |
+| **Claude Code** | `.clauderules` | `.clauderules` | Markdown |
+| **Cursor** | `.cursorrules` | `.cursorrules` | Markdown |
+
+---
+
+## 3. Skill Standard (agentskills.io)
+
+All skills MUST follow this structure to be discovered:
 ```text
-/
-├── agents/                  # Persona definitions (.md)
-├── commands/                # Ready-to-use prompts (.md)
-├── rules/                   # Behavioral constraints (.md)
-├── skills/                  # Modular capabilities
-│   └── <name>/
-│       ├── manifest.json    # Metadata + Hook definitions
-│       ├── tool.json        # Canonical Tool IR (Intermediate Representation)
-│       └── prompt.md        # Usage instructions
-├── src/                     # CLI Logic (Bun)
-├── bin/                     # Entry point
-└── .env.atk                 # Local secrets (Git-ignored)
+skills/<name>/
+├── SKILL.md         # Instructions + YAML Frontmatter
+├── manifest.json    # Metadata (Author, Version)
+├── tool.json        # Technical Tool IR (JSON Schema)
+└── src/index.ts     # Bun logic (expects JSON via STDIN)
 ```
 
 ---
 
-## 3. The Canonical Tool Schema (IR)
+## 4. Safety & Conflict Protocol
 
-To prevent "Schema Drift" across agents, ATK defines a strict **Intermediate Representation (IR)** for tools, loosely based on a simplified MCP.
-
-```json
-{
-  "name": "search_docs",
-  "description": "Searches the local documentation.",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "query": { "type": "string" }
-    },
-    "required": ["query"]
-  },
-  "runtime": "bun",
-  "executable": "src/index.ts"
-}
-```
-*   **Design Decision**: In v1.0, ATK validates tools against this schema. Transpilation to specific agent formats (OpenAI/Gemini) happens deterministically during `link`.
+When a target file exists and is NOT a managed symlink:
+1.  **Detect**: Compare target path against `fs.lstat`.
+2.  **Backup**: If user approves, move original to `[filename].atk-bak`.
+3.  **Link**: Create relative symlink to centralized cache in `~/.config/atk-nodejs/cache/`.
 
 ---
 
-## 4. CLI Command Specification (v1.0 Scope)
+## 5. CLI Command Reference (As Built)
 
-### 4.1 `atk link <type> <name>`
-The primitive operation. Creates a symlink from the toolkit to the target agent environment.
-
-*   **Flags**:
-    *   `--dry-run`: Show exactly what paths will be touched. (Default for complex ops).
-    *   `--force`: Overwrite existing files (No interactive wizard in CI).
-    *   `--ci` / `--non-interactive`: **Fail** if variables are missing or conflicts exist. Do not prompt.
-*   **Behavior**:
-    1.  **Resolve**: Locate component in `ATK_ROOT`.
-    2.  **Validate**: Check `manifest.json` and Tool IR.
-    3.  **Transpile**: If linking a tool, generate the target-specific config (e.g., Gemini JSON) in a temporary buffer.
-    4.  **Execute**: Create the symlink (or write the transpiled file).
-
-### 4.2 `atk doctor` (Diagnostic Only)
-Performs read-only checks and outputs a structured report. **No auto-healing.**
-
-*   **Checks**:
-    *   Broken symlinks.
-    *   Missing environment variables referenced in prompts (`{{VAR}}`).
-    *   Invalid Tool IR syntax.
-    *   Permission issues.
-*   **Output**:
-    ```text
-    [FAIL] Rule 'react-strict': Variable {{PROJECT_LANG}} not defined in context.
-    [WARN] Skill 'git-helper': Symlink target unreachable.
-    ```
-
-### 4.3 `atk init`
-Initializes the environment *explicitly*.
-*   Creates `~/.config/atk/config.json`.
-*   Adds `bin/` to `$PATH`.
-*   Creates local `.env.atk` template (but does not populate it).
-
----
-
-## 5. Variable & Configuration Resolution (Layered)
-
-Resolution is strict and prioritized.
-
-1.  **Secrets**: `.env.atk` (Local, Git-ignored).
-2.  **Global Context**: `~/.config/atk/context.json`.
-3.  **Project Context**: `./.atk/context.json`.
-
-**Failure State**: In `--ci` mode, if a prompt contains `{{MISSING_VAR}}`, the operation exits with code `1`.
-
----
-
-## 6. Architecture & Quality Gates
-
-### 6.1 Performance Goals
-*   **Startup**: < 50ms.
-*   **Link Operation**: < 100ms per file.
-*   **No Scanning**: v1.0 does NOT scan the entire home directory. It only looks at known, registered paths.
-
-### 6.2 Implementation Phases
-
-#### Phase 1: The Core (Week 1)
-*   [ ] `atk init`: Setup config and paths.
-*   [ ] `atk link`: Basic symlinking for Rules/Commands (No tools yet).
-*   [ ] `atk doctor`: Basic connectivity checks.
-*   [ ] **Test**: CI-mode failure states.
-
-#### Phase 2: The Deterministic Runtime (Week 2)
-*   [ ] Variable Resolution Engine (`{{vars}}`).
-*   [ ] Tool IR Validator.
-*   [ ] Transpiler (IR -> Gemini/OpenAI).
-
-#### Phase 3: Hooks & Safety (Week 3)
-*   [ ] `pre_link` / `post_link` execution.
-*   [ ] Hook timeouts (5s default).
-*   [ ] Output logging.
-
----
-
-## 7. Deferred Features (Roadmap v2.0)
-*   **Harvesting**: Scanning system for existing configs.
-*   **Secret Extraction**: Regex scanning of files.
-*   **Auto-Healing**: Attempting to fix broken paths automatically.
-*   **Merge Wizard**: Interactive conflict resolution.
-
+- `atk status`: Dashboard of detected environments and active ATK links.
+- `atk explore [query]`: Fuzzy search for components with instant "Found! Link now?" logic.
+- `atk link [type] [name]`: Guided or direct linking with auto-platform discovery.
+- `atk create [type] [name]`: Scaffolds standard-compliant capabilities.
+- `atk test <name> [-i json]`: Local dry-run debugger for tool logic.
+- `atk mcp [install|run]`: Management for the cross-platform MCP bridge.

@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { spinner } from "@clack/prompts";
+import { isCancel, note, select, spinner } from "@clack/prompts";
 import pc from "picocolors";
 import { UI } from "../utils/ui";
 import { ATKConfig } from "./config";
@@ -153,13 +153,63 @@ export async function createLink(
 
 		// 7. Handle Conflict
 		if (await exists(targetPath)) {
-			if (force) {
+			const isSymlink = (await fs.lstat(targetPath)).isSymbolicLink();
+
+			if (force || isSymlink) {
 				await fs.unlink(targetPath);
 			} else {
 				s.stop(pc.yellow("⚠ Conflict detected."));
-				throw new Error(
-					`File already exists at ${targetPath}. Use --force to overwrite.`,
+
+				if (nonInteractive) {
+					throw new Error(
+						`File already exists at ${targetPath}. Use --force to overwrite.`,
+					);
+				}
+
+				UI.warn(
+					`The file ${pc.bold(path.basename(targetPath))} already contains content.`,
 				);
+
+				const action = await select({
+					message: "How would you like to proceed?",
+					options: [
+						{
+							value: "backup",
+							label: "Backup & Link (Recommended)",
+							hint: "Moves original to .atk-bak",
+						},
+						{
+							value: "overwrite",
+							label: "Overwrite",
+							hint: "Deletes original file",
+						},
+						{
+							value: "abort",
+							label: "Abort",
+							hint: "I will handle this manually",
+						},
+					],
+				});
+
+				if (isCancel(action) || action === "abort") {
+					note(
+						`Linking aborted.\n${pc.dim("Tip: Copy your local content to the toolkit repo to preserve it centrally.")}`,
+						"Manual Action Required",
+					);
+					process.exit(0);
+				}
+
+				if (action === "backup") {
+					const bakPath = `${targetPath}.atk-bak`;
+					await fs.rename(targetPath, bakPath);
+					UI.info(
+						`Original backed up to ${pc.magenta(path.basename(bakPath))}`,
+					);
+				} else {
+					await fs.unlink(targetPath);
+				}
+
+				s.start("Resuming link operation...");
 			}
 		}
 
