@@ -10,7 +10,10 @@ import { UI } from "../utils/ui";
 /**
  * Orchestrates MCP server management and execution.
  */
-export async function mcpCommand(action?: string, options: any = {}) {
+export async function mcpCommand(
+	action?: string,
+	_options: { nonInteractive?: boolean } = {},
+) {
 	if (action === "run") {
 		const server = new ATKMCPServer();
 		return server.run();
@@ -23,6 +26,10 @@ export async function mcpCommand(action?: string, options: any = {}) {
 	}
 
 	UI.error("Invalid MCP action. Use 'run' or 'install'.", "E013");
+}
+
+interface MCPConfig {
+	mcpServers: Record<string, { command: string; args: string[] }>;
 }
 
 /**
@@ -38,10 +45,9 @@ async function installMcpServer() {
 		os.homedir(),
 		".library/Application Support/Claude/claude_desktop_config.json",
 	);
-	// Note: path varies by OS, focusing on Linux/Mac standard for now
 
 	try {
-		let config: any = { mcpServers: {} };
+		let config: MCPConfig = { mcpServers: {} };
 		try {
 			const raw = await fs.readFile(configPath, "utf-8");
 			config = JSON.parse(raw);
@@ -50,7 +56,7 @@ async function installMcpServer() {
 		}
 
 		config.mcpServers = config.mcpServers || {};
-		config.mcpServers["atk"] = {
+		config.mcpServers.atk = {
 			command: "bun",
 			args: ["run", atkBin, "mcp", "run"],
 		};
@@ -71,7 +77,7 @@ async function installMcpServer() {
  * Main execution loop for the MCP Server.
  * Exposes ATK skills as MCP tools over stdio.
  */
-async function runMcpServer() {
+async function _runMcpServer() {
 	// Logic for MCP Server implementation goes here.
 	// This will use the @modelcontextprotocol/sdk or a custom lightweight implementation.
 	console.error("MCP Server 'run' logic not yet fully implemented.");

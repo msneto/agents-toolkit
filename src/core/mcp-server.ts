@@ -10,7 +10,6 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { ATKConfig } from "./config";
 import { type ToolIR, ToolIRSchema } from "./schema";
-import { auditCommand } from "./security";
 
 export class ATKMCPServer {
 	private server: Server;

@@ -4,7 +4,6 @@ import {
 	cancel,
 	intro,
 	isCancel,
-	note,
 	outro,
 	select,
 	spinner,
@@ -17,7 +16,7 @@ import { UI } from "../utils/ui";
 export async function createCommand(
 	type?: string,
 	name?: string,
-	options: any = {},
+	_options: { nonInteractive?: boolean } = {},
 ) {
 	UI.header();
 	intro(pc.cyan("Scaffolding Wizard"));

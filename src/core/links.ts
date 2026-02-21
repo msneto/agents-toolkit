@@ -1,16 +1,20 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import { spinner } from "@clack/prompts";
 import pc from "picocolors";
 import { UI } from "../utils/ui";
 import { ATKConfig } from "./config";
 import { executeHook } from "./hooks";
+import {
+	type ComponentType,
+	resolveTarget,
+	type SupportedPlatform,
+} from "./mapping";
 import { type ToolIR, ToolIRSchema } from "./schema";
-import { replaceVariables, resolveVariables, scanVariables } from "./variables";
-import { resolveTarget, type ComponentType, type SupportedPlatform } from "./mapping";
 import { transpile } from "./transpiler";
+import { replaceVariables, resolveVariables, scanVariables } from "./variables";
 
 export interface LinkOptions {
 	force?: boolean;
@@ -37,10 +41,10 @@ async function exists(p: string): Promise<boolean> {
  * Normalizes a path, resolving ~ to home directory.
  */
 function normalizePath(p: string): string {
-  if (p.startsWith('~')) {
-    return path.join(os.homedir(), p.slice(1));
-  }
-  return path.resolve(p);
+	if (p.startsWith("~")) {
+		return path.join(os.homedir(), p.slice(1));
+	}
+	return path.resolve(p);
 }
 
 /**
@@ -51,14 +55,16 @@ export async function createLink(
 	sourcePath: string,
 	options: LinkOptions = {},
 ) {
-  const { type, name, platform, isGlobal, force, nonInteractive } = options;
-  if (!type || !name || !platform) {
-    throw new Error("Missing required options for createLink: type, name, platform");
-  }
+	const { type, name, platform, isGlobal, force, nonInteractive } = options;
+	if (!type || !name || !platform) {
+		throw new Error(
+			"Missing required options for createLink: type, name, platform",
+		);
+	}
 
 	const s = spinner();
 	const componentDir = path.dirname(sourcePath);
-	const isSkill = type === 'skill';
+	const isSkill = type === "skill";
 	let toolData: ToolIR | null = null;
 
 	// 1. Tool IR Validation (Skills Only)
@@ -83,15 +89,20 @@ export async function createLink(
 		});
 	}
 
-  // 3. Resolve Target Path
-  const targetConfig = resolveTarget(type, platform, name, isGlobal);
-  if (!targetConfig) {
-    throw new Error(`Could not resolve target configuration for ${type} on ${platform}`);
-  }
+	// 3. Resolve Target Path
+	const targetConfig = resolveTarget(type, platform, name, isGlobal);
+	if (!targetConfig) {
+		throw new Error(
+			`Could not resolve target configuration for ${type} on ${platform}`,
+		);
+	}
 
-  const baseTargetPath = normalizePath(targetConfig.path);
-  await fs.mkdir(baseTargetPath, { recursive: true });
-  const targetPath = path.join(baseTargetPath, `${targetConfig.filename}${targetConfig.extension}`);
+	const baseTargetPath = normalizePath(targetConfig.path);
+	await fs.mkdir(baseTargetPath, { recursive: true });
+	const targetPath = path.join(
+		baseTargetPath,
+		`${targetConfig.filename}${targetConfig.extension}`,
+	);
 
 	s.start(`Linking ${UI.path(sourcePath)} to ${UI.path(targetPath)}`);
 
@@ -100,22 +111,21 @@ export async function createLink(
 		const vars = scanVariables(content);
 
 		let finalSource = sourcePath;
-    let finalContent = content;
+		let finalContent = content;
 
-    // 4. Resolve Variables
-    const resolvedValues = vars.length > 0 
-      ? await resolveVariables(vars, { nonInteractive }) 
-      : {};
-    
-    finalContent = replaceVariables(content, resolvedValues);
+		// 4. Resolve Variables
+		const resolvedValues =
+			vars.length > 0 ? await resolveVariables(vars, { nonInteractive }) : {};
 
-    // 5. Transpile
-    const transpilation = transpile(finalContent, name, targetConfig);
-    finalContent = transpilation.content;
+		finalContent = replaceVariables(content, resolvedValues);
 
-    // 6. Cache if changed or transpiled
-    const needsCache = vars.length > 0 || targetConfig.format !== 'md';
-    if (needsCache) {
+		// 5. Transpile
+		const transpilation = transpile(finalContent, name, targetConfig);
+		finalContent = transpilation.content;
+
+		// 6. Cache if changed or transpiled
+		const needsCache = vars.length > 0 || targetConfig.format !== "md";
+		if (needsCache) {
 			const globalConfigPath = ATKConfig.path();
 			const cacheDir = path.join(path.dirname(globalConfigPath), "cache");
 			await fs.mkdir(cacheDir, { recursive: true });

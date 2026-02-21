@@ -1,8 +1,10 @@
 import { Command } from "commander";
 import { createCommand } from "./commands/create";
+import { exploreCommand } from "./commands/explore";
 import { initCommand } from "./commands/init";
 import { linkCommand } from "./commands/link";
 import { mcpCommand } from "./commands/mcp";
+import { statusCommand } from "./commands/status";
 import { testCommand } from "./commands/test";
 import { UI } from "./utils/ui";
 
@@ -103,6 +105,31 @@ program
 			await createCommand(type, name, options);
 		} catch (err) {
 			UI.error(err instanceof Error ? err.message : String(err), "E005");
+			process.exit(1);
+		}
+	});
+
+program
+	.command("status", { isDefault: true })
+	.description("Show current toolkit status and active links")
+	.action(async () => {
+		try {
+			await statusCommand();
+		} catch (err) {
+			UI.error(err instanceof Error ? err.message : String(err), "E006");
+			process.exit(1);
+		}
+	});
+
+program
+	.command("explore")
+	.description("Browse and search for available components in your toolkit")
+	.argument("[query]", "Search query")
+	.action(async (query) => {
+		try {
+			await exploreCommand(query);
+		} catch (err) {
+			UI.error(err instanceof Error ? err.message : String(err), "E007");
 			process.exit(1);
 		}
 	});

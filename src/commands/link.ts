@@ -1,15 +1,15 @@
-import { intro, outro, select, isCancel, cancel } from "@clack/prompts";
-import pc from "picocolors";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { cancel, intro, isCancel, outro, select } from "@clack/prompts";
+import pc from "picocolors";
 import { ATKConfig } from "../core/config";
 import { createLink } from "../core/links";
-import { UI } from "../utils/ui";
 import {
-	SUPPORTED_PLATFORMS,
 	type ComponentType,
+	SUPPORTED_PLATFORMS,
 	type SupportedPlatform,
 } from "../core/mapping";
+import { UI } from "../utils/ui";
 
 export async function linkCommand(
 	type?: string,
