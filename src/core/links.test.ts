@@ -24,6 +24,7 @@ import path from "node:path";
 import * as prompts from "@clack/prompts";
 import { ATKConfig } from "./config";
 import * as links from "./links";
+import * as variables from "./variables";
 
 const dirent = (name: string, type: "file" | "dir" | "symlink") => ({
 	name,
@@ -133,6 +134,30 @@ describe("core/links", () => {
 			);
 
 			expect(result.finalSource).toBe("/tmp/skills/demo/content.md");
+			expect(result.needsCache).toBe(true);
+		});
+
+		it("applies variable substitution for markdown command targets", async () => {
+			const targetConfig = {
+				path: ".claude/commands/",
+				filename: "demo",
+				extension: ".md",
+				format: "md",
+				scope: "project",
+			} as const;
+
+			spyOn(fs, "readFile").mockResolvedValue("Run {{args}} safely.");
+			spyOn(variables, "resolveVariables").mockResolvedValue({ args: "tests" });
+
+			const result = await links.prepareResolvedContent(
+				"/tmp/commands/demo.md",
+				"command",
+				"demo",
+				targetConfig,
+				{ nonInteractive: true },
+			);
+
+			expect(result.content).toBe("Run tests safely.");
 			expect(result.needsCache).toBe(true);
 		});
 

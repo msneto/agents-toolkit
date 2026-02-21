@@ -40,4 +40,25 @@ description: Enforce standards.
 		const result = transpile(markdown, "test", config);
 		expect(result.content).toBe(markdown);
 	});
+
+	it("should preserve command frontmatter in markdown targets", () => {
+		const markdown = `---
+name: test
+description: Demo command
+---
+
+# Test
+Use {{args}}.
+`;
+		const config: TargetConfig = {
+			path: ".claude/commands/",
+			filename: "test",
+			extension: ".md",
+			format: "md",
+			scope: "project",
+		};
+
+		const result = transpile(markdown, "test", config);
+		expect(result.content).toBe(markdown);
+	});
 });

@@ -38,6 +38,16 @@ describe("Mapping Discovery", () => {
 		expect(result?.filename).toBe("my-cmd");
 	});
 
+	it("should resolve claude command targets for project and global scope", () => {
+		const projectResult = resolveTarget("command", "claude", "my-cmd");
+		expect(projectResult?.path).toBe(".claude/commands/");
+		expect(projectResult?.filename).toBe("my-cmd");
+
+		const globalResult = resolveTarget("command", "claude", "my-cmd", true);
+		expect(globalResult?.path).toBe("~/.claude/commands/");
+		expect(globalResult?.filename).toBe("my-cmd");
+	});
+
 	it("should return null for invalid mapping", () => {
 		const result = resolveTarget("rule", "codex", "test");
 		expect(result).toBeNull();

@@ -187,6 +187,29 @@ describe("commands/link", () => {
 		expect(exitSpy).toHaveBeenCalledWith(1);
 	});
 
+	it("passes claude command link options for global scope", async () => {
+		spyOn(links, "resolveSourceFile").mockResolvedValue(
+			"/mock/atk/commands/test.md",
+		);
+		const createSpy = spyOn(links, "createLink").mockResolvedValue(undefined);
+
+		await linkCommand("command", "test", {
+			platform: "claude",
+			global: true,
+			nonInteractive: true,
+		});
+
+		expect(createSpy).toHaveBeenCalledWith(
+			"/mock/atk/commands/test.md",
+			expect.objectContaining({
+				type: "command",
+				name: "test",
+				platform: "claude",
+				isGlobal: true,
+			}),
+		);
+	});
+
 	it("broadcasts to all detected platforms", async () => {
 		spyOn(mapping, "detectProjectPlatforms").mockResolvedValue([
 			"gemini",

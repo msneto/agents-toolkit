@@ -105,4 +105,16 @@ describe("commands/create", () => {
 		).rejects.toThrow(/Failed to open editor/);
 		expect(spawnSpy).toHaveBeenCalled();
 	});
+
+	it("scaffolds command with name and description frontmatter", async () => {
+		await createCommand("command", "test-cmd", { nonInteractive: true });
+
+		const commandPath = path.join(atkRoot, "commands", "test-cmd.md");
+		const content = await fs.readFile(commandPath, "utf-8");
+
+		expect(content).toContain("---");
+		expect(content).toContain("name: test-cmd");
+		expect(content).toContain("description: ");
+		expect(content).toContain("# test-cmd Command");
+	});
 });
